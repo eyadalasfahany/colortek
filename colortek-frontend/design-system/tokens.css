@@ -26,10 +26,22 @@
   --color-neutral-50:  #F8F9F9; /* Paper    — app background */
   --color-white:        #FFFFFF;
 
-  /* ---------- Brand accent ---------- */
-  --color-orange:       #F26920; /* Primary action / links */
-  --color-orange-dark:  #C9540F; /* Hover / pressed */
-  --color-orange-tint:  #FBE3D3; /* Highlight background */
+  /* ---------- Brand accent (orange ramp) ---------- */
+  --color-orange-50:   #FDEEE3;
+  --color-orange-100:  #FBE3D3;
+  --color-orange-200:  #F7C7A7;
+  --color-orange-300:  #F3A87A;
+  --color-orange-400:  #F58B4C;
+  --color-orange-500:  #F26920; /* Primary action / links */
+  --color-orange-600:  #C9540F; /* Hover / pressed */
+  --color-orange-700:  #A8460D;
+  --color-orange-800:  #86380B;
+  --color-orange-900:  #6B2D09;
+  --color-orange-950:  #401A05;
+
+  --color-orange:       var(--color-orange-500);
+  --color-orange-dark:  var(--color-orange-600);
+  --color-orange-tint:  var(--color-orange-100);
 
   /* ---------- Brand spectrum (from the logo) ---------- */
   --color-green:        #0E8340;
@@ -39,13 +51,49 @@
   --color-indigo:        #3F3E8D;
   --color-purple:        #7B5796;
 
+  /* ---------- Green ramp (success) ---------- */
+  --color-green-50:  #EAF5EC;
+  --color-green-100: #D2E8D6;
+  --color-green-200: #A8D2AE;
+  --color-green-300: #7DBB86;
+  --color-green-400: var(--color-green-bright);
+  --color-green-500: var(--color-green-bright);
+  --color-green-600: var(--color-green);
+  --color-green-700: #0B6833;
+  --color-green-800: #094E27;
+  --color-green-900: #06381C;
+
+  /* ---------- Red ramp (danger) ---------- */
+  --color-red-50:  #FBEAE8;
+  --color-red-100: #F5D2CE;
+  --color-red-200: #EBA79E;
+  --color-red-300: #E07C6D;
+  --color-red-400: #D6584D;
+  --color-red-500: #C6392E;
+  --color-red-600: #A62F26;
+  --color-red-700: #86261F;
+  --color-red-800: #661D18;
+  --color-red-900: #451411;
+
+  /* ---------- Info ramp (blue) ---------- */
+  --color-info-50:  #EAF1F7;
+  --color-info-100: #C9DCEA;
+  --color-info-200: #9FC1D9;
+  --color-info-300: #6FA3C6;
+  --color-info-400: var(--color-blue-bright);
+  --color-info-500: var(--color-blue);
+  --color-info-600: #114876;
+  --color-info-700: #0D3A5F;
+  --color-info-800: #092A45;
+  --color-info-900: #051A2B;
+
   /* ---------- Semantic / status ---------- */
   --color-status-neutral: var(--color-neutral-500); /* Not started */
   --color-status-info:    var(--color-blue);         /* In progress */
   --color-status-pending: var(--color-purple);       /* In review   */
   --color-status-success: var(--color-green);        /* Complete    */
   --color-status-warning: var(--color-orange);       /* At risk     */
-  --color-status-danger:  #C6392E;                   /* Blocked — the one hue not native to the logo */
+  --color-status-danger:  var(--color-red-500);      /* Blocked — the one hue not native to the logo */
 
   /* ---------- Typography ---------- */
   --font-family-base: 'Montserrat', system-ui, -apple-system, sans-serif;
