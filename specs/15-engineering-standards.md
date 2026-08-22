@@ -210,10 +210,69 @@ Missing and required for Phase 1:
 | `src/config/APIConfig.ts` (`serverPageFetchRequest`) | Server Component fetching |
 | `src/config/clientAPI.ts` (`generalGetRequest`, `generalPostRequest`) | Client fetching |
 | `src/lib/queryKeys.ts` | Every `useQuery` |
-| `src/components/common/form/` | Shared Formik field components |
+| `src/components/common/form/` | Formik wrappers around the TailGrids primitives. See §B2b |
 
 Routes move under `src/app/[locale]/`. This is a prerequisite for the RTL
 requirement, not an optional refactor.
+
+## B2b. Component reuse — binding
+
+`colortek-frontend` already ships **TailGrids core** (42 primitives on
+react-aria-components / base-ui) plus a header and sidebar shell.
+
+**Rule: reuse before creating.** Build a new component only when no TailGrids
+primitive covers the need, and then build it once in `components/common/`, never
+inline in a screen.
+
+Available now — do not rebuild any of these:
+
+| Group | Components |
+|---|---|
+| Input | `input`, `text-field`, `text-area`, `number-field`, `select`, `checkbox`, `toggle`, `otp-input`, `input-group`, `field`, `label`, `description` |
+| Date & time | `calendar`, `date-field`, `date-picker`, `time-field` |
+| Layout | `card`, `separator`, `tabs`, `accordion`, `collapsible`, `resizable`, `scroll-area` |
+| Overlay | `dialog`, `sheet`, `popover`, `dropdown`, `tooltip`, `overlay` |
+| Feedback | `alert`, `badge`, `progress`, `skeleton`, `spinner` |
+| Data | `table`, `pagination`, `chart`, `carousel`, `avatar`, `breadcrumbs` |
+| Action | `button`, `button-group`, `social-button` |
+
+Two consequences worth stating:
+
+1. **Formik binds to these, it does not replace them.**
+   `15-engineering-standards.md` §B4 requires Formik plus Yup. So
+   `components/common/form/` holds thin wrappers that connect a TailGrids
+   primitive to Formik's `useField`. The primitive stays presentational; Formik
+   owns the state. Do not import TailGrids inputs directly into a screen — go
+   through the wrapper, or every form re-invents error display.
+
+2. **react-aria-components handle RTL natively.** Direction comes from the
+   ancestor `dir` attribute set in the locale layout, so the primitives mirror
+   without per-component work. This removes most of the RTL cost from
+   `12-i18n-and-rtl.md` §3 — but only for the primitives. Custom layout in a
+   screen still needs logical properties.
+
+**Design tokens are still the source of truth.** `AGENTS.md` and
+`design-system/DESIGN-SYSTEM.md` apply to TailGrids components as much as to our
+own: no hardcoded hex, no ad-hoc spacing. Where a TailGrids default conflicts
+with a token, override it once at the component level in
+`components/common/`, not per screen.
+
+**What must still be built** (nothing in TailGrids covers these):
+
+| Component | Used by |
+|---|---|
+| `TaskCard` | My Tasks, Queue, project detail |
+| `StatusChip` | Everywhere — nine task statuses plus the overdue flag |
+| `DeadlineLabel` | "due in 3 hours" / "2 days late" in both languages |
+| `TimerDisplay` | Workshop live timers |
+| `ActivityFeedLine` | The control room feed — dense, one line, not a card |
+| `WorkflowStrip` | The project stage map, able to show two live stages at once |
+| `SampleChainThread` | The attempt thread |
+| `MeasurementRow` | The site sheet row plus its deduction inputs |
+| `DynamicTaskForm` | Renders a task form from `form_schema` |
+
+Each is a `components/common/` or feature component composed **from** TailGrids
+primitives, not written from scratch.
 
 ## B3. Structure
 

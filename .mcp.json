@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "php",
+            "args": [
+                "/Applications/MAMP/htdocs/Colortek/colortek-api/artisan",
+                "boost:mcp"
+            ]
+        },
+        "next-devtools": {
+            "command": "npx",
+            "args": ["-y", "next-devtools-mcp@latest"]
+        }
+    }
+}

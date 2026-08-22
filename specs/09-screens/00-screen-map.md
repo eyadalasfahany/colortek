@@ -3,6 +3,11 @@
 Phase 1 screens. Each entry gives the purpose, who sees it, the data it needs,
 its states and its actions. The four hardest screens have their own file.
 
+**Build from the components that already exist.** `colortek-frontend` ships
+TailGrids core — 42 primitives plus a header and sidebar shell. Reuse before
+creating; the full inventory and the nine components that still need building are
+in `15-engineering-standards.md` §B2b.
+
 Design tokens come from `design-system/DESIGN-SYSTEM.md`. Do not invent colours
 or spacing. Every screen must work in Arabic RTL and English LTR.
 `[CONFIRMED]` A32
