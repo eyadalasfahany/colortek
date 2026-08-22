@@ -1,0 +1,86 @@
+/*
+  Colortek Design System — Design Tokens
+  Source: Colortek logo + Neocement catalogue (Adobe InDesign, Montserrat)
+          + the AI-Powered Live Project Workflow spec (9-state task model)
+  Canvas: https://claude.ai/code/artifact/89f20793-fde9-4bc9-926e-8de014fbc3dd
+
+  Framework-agnostic CSS custom properties — works in any stack.
+  For this project (Next.js): import once in app/globals.css with
+  `@import "../design-system/tokens.css";` at the top, then either
+  use var(--token-name) directly in CSS/Tailwind arbitrary values
+  (bg-[var(--color-orange)]) or extend tailwind.config with
+  tailwind.tokens.ts (see that file / DESIGN-SYSTEM.md).
+*/
+
+:root {
+  /* ---------- Neutrals ---------- */
+  --color-neutral-900: #2A2F32; /* Ink      — primary dark surface */
+  --color-neutral-800: #333A3D; /* Charcoal — catalogue background */
+  --color-neutral-700: #454C4F; /* Slate    — dark borders / dividers */
+  --color-neutral-600: #6B7275; /* Stone    — secondary text on light */
+  --color-neutral-500: #8B9295; /* Fog      — placeholder / disabled text */
+  --color-neutral-400: #AEB4B6; /* Ash      — icons, muted text on dark */
+  --color-neutral-300: #CDD1D2; /* Mist     — borders on light */
+  --color-neutral-200: #E4E6E6; /* Panel    — catalogue light panel */
+  --color-neutral-100: #F1F2F2; /* Cloud    — subtle fills */
+  --color-neutral-50:  #F8F9F9; /* Paper    — app background */
+  --color-white:        #FFFFFF;
+
+  /* ---------- Brand accent ---------- */
+  --color-orange:       #F26920; /* Primary action / links */
+  --color-orange-dark:  #C9540F; /* Hover / pressed */
+  --color-orange-tint:  #FBE3D3; /* Highlight background */
+
+  /* ---------- Brand spectrum (from the logo) ---------- */
+  --color-green:        #0E8340;
+  --color-green-bright: #45A840;
+  --color-blue:          #155898;
+  --color-blue-bright:   #3F77AB;
+  --color-indigo:        #3F3E8D;
+  --color-purple:        #7B5796;
+
+  /* ---------- Semantic / status ---------- */
+  --color-status-neutral: var(--color-neutral-500); /* Not started */
+  --color-status-info:    var(--color-blue);         /* In progress */
+  --color-status-pending: var(--color-purple);       /* In review   */
+  --color-status-success: var(--color-green);        /* Complete    */
+  --color-status-warning: var(--color-orange);       /* At risk     */
+  --color-status-danger:  #C6392E;                   /* Blocked — the one hue not native to the logo */
+
+  /* ---------- Typography ---------- */
+  --font-family-base: 'Montserrat', system-ui, -apple-system, sans-serif;
+
+  --font-size-display: 64px;  --line-height-display: 1.02; --font-weight-display: 800; --letter-spacing-display: -0.01em;
+  --font-size-h1:      40px;  --line-height-h1:      1.08; --font-weight-h1:      800;
+  --font-size-h2:      28px;  --line-height-h2:      1.2;  --font-weight-h2:      700;
+  --font-size-h3:      20px;  --line-height-h3:      1.3;  --font-weight-h3:      700;
+  --font-size-body-lg: 17px;  --line-height-body-lg: 1.6;  --font-weight-body-lg: 400;
+  --font-size-body:    15px;  --line-height-body:    1.6;  --font-weight-body:    400;
+  --font-size-body-sm: 13px;  --line-height-body-sm: 1.5;  --font-weight-body-sm: 400;
+  --font-size-label:   12px;  --line-height-label:   1.4;  --font-weight-label:   600; --letter-spacing-label: 0.12em;
+  --font-size-caption: 11px;  --line-height-caption: 1.4;  --font-weight-caption: 500; --letter-spacing-caption: 0.08em;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* ---------- Radius ---------- */
+  --radius-input:  2px;
+  --radius-button: 4px;
+  --radius-card:   8px;
+  --radius-modal:  12px;
+
+  /* ---------- Elevation ---------- */
+  --shadow-1: 0 1px 2px rgba(20, 22, 23, 0.08);
+  --shadow-2: 0 4px 12px rgba(20, 22, 23, 0.10);
+  --shadow-3: 0 12px 28px rgba(20, 22, 23, 0.16);
+  --border-on-dark: 1px solid var(--color-neutral-700);
+  --border-on-light: 1px solid var(--color-neutral-300);
+}
