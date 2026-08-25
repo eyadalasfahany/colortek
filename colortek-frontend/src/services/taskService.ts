@@ -72,3 +72,14 @@ export async function completeTask(
 
   return response;
 }
+
+export async function overrideSiteBlock(id: number, reason: string): Promise<TaskDetail> {
+  const response = await axiosInstance.post<unknown>(`/tasks/${id}/override-site-block`, { reason });
+  const data = unwrapData<unknown>(response);
+
+  if (!isTaskDetail(data)) {
+    throw new Error("Invalid override response");
+  }
+
+  return data;
+}
