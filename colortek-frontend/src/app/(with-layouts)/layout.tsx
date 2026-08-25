@@ -1,5 +1,6 @@
 "use client";
 
+import AuthGuard from "@/components/auth/auth-guard";
 import Header from "@/components/common/header";
 import Sidebar from "@/components/common/sidebar";
 import { SheetContent, SheetOverlay, SheetTitle } from "@/components/tailgrids/core/sheet";
@@ -57,7 +58,9 @@ export default function WithLayout({ children }: { children: ReactNode }) {
           <Header onMenuClick={() => setIsMobileSheetOpen(true)} />
 
           <main className="scrollbar-thin flex-1 min-h-0 overflow-y-auto">
-            <div className="mx-auto w-full max-w-384 pb-5">{children}</div>
+            <div className="mx-auto w-full max-w-384 pb-5">
+              <AuthGuard>{children}</AuthGuard>
+            </div>
           </main>
         </div>
       </div>
