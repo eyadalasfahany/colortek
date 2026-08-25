@@ -234,6 +234,8 @@ final class ReferenceSeeder extends Seeder
                 ['value' => $value, 'group' => 'general'],
             );
         }
+
+        $this->call(PaymentWorkflowSeeder::class);
     }
 
     private function seedBlockerCategories(): void

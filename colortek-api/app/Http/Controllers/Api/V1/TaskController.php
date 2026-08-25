@@ -7,11 +7,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskBlockRequest;
 use App\Http\Requests\TaskCompleteRequest;
+use App\Http\Resources\AttachmentResource;
 use App\Http\Resources\CreatedTaskResource;
 use App\Http\Resources\TaskListResource;
 use App\Http\Resources\TaskResource;
 use App\Models\BlockerCategory;
 use App\Models\Task;
+use App\Services\Attachments\AttachmentService;
 use App\Services\Tasks\TaskQueryService;
 use App\Services\Tasks\TaskService;
 use Carbon\CarbonImmutable;
@@ -24,6 +26,7 @@ final class TaskController extends Controller
     public function __construct(
         private TaskService $taskService,
         private TaskQueryService $taskQueryService,
+        private AttachmentService $attachmentService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -41,7 +44,15 @@ final class TaskController extends Controller
         $this->authorize('view', $task);
 
         return response()->json([
-            'data' => TaskResource::make($task->load(['department', 'claimant', 'project'])),
+            'data' => TaskResource::make($task->load([
+                'department',
+                'claimant',
+                'project',
+                'definition',
+                'subject',
+                'instance.tasks.definition',
+                'instance.tasks.fieldValues',
+            ])),
         ]);
     }
 
@@ -134,6 +145,23 @@ final class TaskController extends Controller
                 'project_stage' => $result['task']->project?->stage,
             ],
         ]);
+    }
+
+    public function attach(Request $request, int $id): JsonResponse
+    {
+        $task = $this->findTaskOrFail($id);
+        $this->authorize('complete', $task);
+
+        $request->validate([
+            'attachment_id' => ['required', 'integer', 'exists:attachments,id'],
+        ]);
+
+        $attachment = $this->attachmentService->findOrFail($request->integer('attachment_id'));
+        $linked = $this->attachmentService->attachToTask($task, $attachment);
+
+        return response()->json([
+            'data' => AttachmentResource::make($linked),
+        ], 201);
     }
 
     private function findTaskOrFail(int $id): Task

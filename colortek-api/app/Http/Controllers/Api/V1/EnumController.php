@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\JournalStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
+use App\Enums\ProjectStage;
+use App\Enums\QuotationStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
@@ -19,6 +24,11 @@ final class EnumController extends Controller
             'task_status' => $this->taskStatuses(),
             'task_priority' => $this->taskPriorities(),
             'blocker_category' => $this->blockerCategories(),
+            'payment_method' => $this->labeledEnumCases(PaymentMethod::cases()),
+            'payment_status' => $this->labeledEnumCases(PaymentStatus::cases()),
+            'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
+            'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
+            'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
             default => null,
         };
 
@@ -65,5 +75,20 @@ final class EnumController extends Controller
                 'label' => $category->getTranslation('name', app()->getLocale()),
             ])
             ->all();
+    }
+
+    /**
+     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus>  $cases
+     * @return list<array{value: string, label: string}>
+     */
+    private function labeledEnumCases(array $cases): array
+    {
+        $items = [];
+
+        foreach ($cases as $case) {
+            $items[] = ['value' => $case->value, 'label' => $case->label()];
+        }
+
+        return $items;
     }
 }

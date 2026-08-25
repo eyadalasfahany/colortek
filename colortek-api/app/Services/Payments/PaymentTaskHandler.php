@@ -1,0 +1,205 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Payments;
+
+use App\Enums\ActivitySeverity;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
+use App\Enums\ProjectStage;
+use App\Enums\QuotationStatus;
+use App\Exceptions\TaskNotReadyToComplete;
+use App\Models\Attachment;
+use App\Models\Payment;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
+use App\Services\Activity\ActivityRecorder;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
+
+final class PaymentTaskHandler
+{
+    public function __construct(
+        private JournalService $journalService,
+        private ActivityRecorder $activityRecorder,
+    ) {}
+
+    /**
+     * @param  array<string, mixed>  $fields
+     * @param  array<string, mixed>  $attachmentIds
+     */
+    public function handleBeforeComplete(Task $task, User $user, array $fields, array $attachmentIds): void
+    {
+        $task->loadMissing(['definition', 'subject', 'project']);
+
+        $code = $task->definition?->code;
+        if ($code === null) {
+            return;
+        }
+
+        match ($code) {
+            'sales_confirm_payment' => $this->handleSalesConfirm($task, $user, $fields, $attachmentIds),
+            'reception_review_payment' => $this->handleReceptionReview($task, $user, $fields),
+            default => null,
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $fields
+     * @param  array<string, mixed>  $attachmentIds
+     */
+    private function handleSalesConfirm(Task $task, User $user, array $fields, array $attachmentIds): void
+    {
+        if (! filter_var($fields['quotation_locked'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            throw TaskNotReadyToComplete::missingField('quotation_locked');
+        }
+
+        $proofIds = $this->resolveAttachmentIdsForType($attachmentIds, 'payment_proof');
+        if ($proofIds === [] && ! $user->can('payment.skip_proof')) {
+            throw TaskNotReadyToComplete::missingAttachment('payment_proof');
+        }
+
+        /** @var Payment|null $payment */
+        $payment = $task->subject instanceof Payment ? $task->subject : null;
+        if ($payment === null) {
+            throw new TaskNotReadyToComplete(
+                __('Payment record not found for this task.'),
+                'payment.not_found',
+            );
+        }
+
+        $project = $payment->project ?? $task->project;
+        if ($project === null) {
+            throw new TaskNotReadyToComplete(
+                __('Project not found for this payment.'),
+                'payment.project_not_found',
+            );
+        }
+
+        DB::transaction(function () use ($payment, $project, $user, $fields, $proofIds): void {
+            $payment->update([
+                'installment_number' => (int) $fields['installment_number'],
+                'amount' => $fields['amount'],
+                'method' => PaymentMethod::from((string) $fields['method']),
+                'paid_at' => CarbonImmutable::parse((string) $fields['paid_at'])->toDateString(),
+                'notes' => $fields['notes'] ?? null,
+                'status' => PaymentStatus::Confirmed,
+                'confirmed_by_user_id' => $user->id,
+                'confirmed_at' => now(),
+                'quotation_id' => $payment->quotation_id ?? $project->quotation_id,
+            ]);
+
+            $this->lockQuotation($project, $user);
+
+            if ((int) $fields['installment_number'] === 1
+                && in_array($project->stage, [ProjectStage::Lead, ProjectStage::Quotation], true)) {
+                $project->update(['stage' => ProjectStage::Payment]);
+            }
+
+            $this->linkAttachments($proofIds, $payment);
+        });
+
+        $this->activityRecorder->record(
+            type: 'payment.confirmed',
+            severity: ActivitySeverity::Success,
+            messageEn: sprintf('Payment of %s EGP confirmed for %s.', $fields['amount'], $project->reference),
+            messageAr: sprintf('تم تأكيد دفعة %s جنيه للمشروع %s.', $fields['amount'], $project->reference),
+            actor: $user,
+            project: $project,
+            subject: $payment->fresh(),
+            department: $task->department,
+        );
+    }
+
+    /** @param array<string, mixed> $fields */
+    private function handleReceptionReview(Task $task, User $user, array $fields): void
+    {
+        if (($fields['review_result'] ?? '') === 'query' && empty($fields['review_note'])) {
+            throw TaskNotReadyToComplete::missingField('review_note');
+        }
+
+        if (($fields['review_result'] ?? '') !== 'accepted') {
+            return;
+        }
+
+        /** @var Payment|null $payment */
+        $payment = $task->subject instanceof Payment ? $task->subject : null;
+        if ($payment === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($payment, $user): void {
+            $journal = $this->journalService->openJournalForDate(CarbonImmutable::today());
+
+            $payment->update([
+                'status' => PaymentStatus::Reviewed,
+                'reviewed_by_user_id' => $user->id,
+                'reviewed_at' => now(),
+            ]);
+
+            $this->journalService->attachPayment($journal, $payment->fresh());
+        });
+    }
+
+    private function lockQuotation(Project $project, User $user): void
+    {
+        $quotation = $project->quotation;
+        if ($quotation === null) {
+            return;
+        }
+
+        if ($quotation->status === QuotationStatus::Locked) {
+            return;
+        }
+
+        $quotation->update([
+            'status' => QuotationStatus::Locked,
+            'locked_at' => now(),
+            'locked_by_user_id' => $user->id,
+        ]);
+    }
+
+    /** @param list<int> $attachmentIds */
+    private function linkAttachments(array $attachmentIds, Payment $payment): void
+    {
+        if ($attachmentIds === []) {
+            return;
+        }
+
+        Attachment::query()
+            ->whereIn('id', $attachmentIds)
+            ->update([
+                'attachable_type' => $payment->getMorphClass(),
+                'attachable_id' => $payment->id,
+            ]);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $attachmentIds
+     * @return list<int>
+     */
+    private function resolveAttachmentIdsForType(array $attachmentIds, string $type): array
+    {
+        if (isset($attachmentIds[$type]) && is_array($attachmentIds[$type])) {
+            return array_map(intval(...), $attachmentIds[$type]);
+        }
+
+        if ($this->isFlatAttachmentList($attachmentIds)) {
+            return array_map(intval(...), $attachmentIds);
+        }
+
+        return [];
+    }
+
+    /** @param array<int|string, mixed> $attachmentIds */
+    private function isFlatAttachmentList(array $attachmentIds): bool
+    {
+        if ($attachmentIds === []) {
+            return true;
+        }
+
+        return array_keys($attachmentIds) === range(0, count($attachmentIds) - 1);
+    }
+}

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Workflow;
 
 use App\Enums\TaskStatus;
+use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\WorkflowInstance;
@@ -29,7 +30,11 @@ final class WorkflowEngine
             throw new RuntimeException('Cannot instantiate a draft workflow template.');
         }
 
-        $project = $subject instanceof Project ? $subject : null;
+        $project = match (true) {
+            $subject instanceof Project => $subject,
+            $subject instanceof Payment => $subject->loadMissing('project')->project,
+            default => null,
+        };
         if ($project === null && $subject->relationLoaded('project')) {
             $relatedProject = $subject->getRelation('project');
             if ($relatedProject instanceof Project) {
