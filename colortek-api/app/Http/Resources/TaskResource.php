@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\PaymentMethod;
 use App\Models\Payment;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use ValueError;
 
 /** @mixin Task */
 class TaskResource extends JsonResource
@@ -35,7 +37,9 @@ class TaskResource extends JsonResource
             'department' => DepartmentResource::make($this->whenLoaded('department')),
             'claimant' => UserResource::make($this->whenLoaded('claimant')),
             'project_id' => $this->project_id,
-            'form_schema' => $definition?->form_schema,
+            'form_schema' => $definition !== null
+                ? $this->normalizeFormSchema($definition->form_schema, $locale)
+                : null,
             'required_fields' => $definition !== null ? ($definition->required_fields ?? []) : [],
             'required_attachment_types' => $definition !== null ? ($definition->required_attachment_types ?? []) : [],
             'previous_outputs' => $this->when(
@@ -113,10 +117,91 @@ class TaskResource extends JsonResource
                     'total_value' => $subject->quotation->total_value,
                     'currency' => $subject->quotation->currency,
                 ] : null,
-                'attachments' => AttachmentResource::collection($subject->attachments ?? collect())->resolve(),
+                'attachments' => collect($subject->attachments ?? [])->map(fn ($attachment): array => [
+                    'id' => $attachment->id,
+                    'type' => $attachment->type,
+                    'filename' => $attachment->original_name,
+                ])->values()->all(),
             ];
         }
 
         return null;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function normalizeFormSchema(?array $schema, string $locale): ?array
+    {
+        if ($schema === null || ! isset($schema['fields']) || ! is_array($schema['fields'])) {
+            return $schema;
+        }
+
+        return [
+            'fields' => array_map(
+                fn (array $field): array => $this->normalizeFormField($field, $locale),
+                $schema['fields'],
+            ),
+        ];
+    }
+
+    /** @param array<string, mixed> $field @return array<string, mixed> */
+    private function normalizeFormField(array $field, string $locale): array
+    {
+        $name = (string) ($field['name'] ?? $field['key'] ?? '');
+        $labelKey = $locale === 'ar' ? 'label_ar' : 'label_en';
+        $label = (string) ($field['label'] ?? $field[$labelKey] ?? $field['label_en'] ?? $name);
+
+        $normalized = [
+            'name' => $name,
+            'type' => (string) ($field['type'] ?? 'text'),
+            'label' => $label,
+        ];
+
+        if (array_key_exists('required', $field)) {
+            $normalized['required'] = (bool) $field['required'];
+        }
+
+        if (isset($field['options']) && is_array($field['options'])) {
+            $normalized['options'] = $this->normalizeFieldOptions($field['options']);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $options
+     * @return list<array{value: string, label: string}>
+     */
+    private function normalizeFieldOptions(array $options): array
+    {
+        $items = [];
+
+        foreach ($options as $option) {
+            if (is_array($option) && isset($option['value'])) {
+                $items[] = [
+                    'value' => (string) $option['value'],
+                    'label' => (string) ($option['label'] ?? $option['value']),
+                ];
+
+                continue;
+            }
+
+            if (is_string($option)) {
+                $items[] = [
+                    'value' => $option,
+                    'label' => $this->labelForOptionValue($option),
+                ];
+            }
+        }
+
+        return $items;
+    }
+
+    private function labelForOptionValue(string $value): string
+    {
+        try {
+            return PaymentMethod::from($value)->label();
+        } catch (ValueError) {
+            return ucfirst(str_replace('_', ' ', $value));
+        }
     }
 }

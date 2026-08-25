@@ -143,6 +143,32 @@ final class PaymentTaskHandler
             throw TaskNotReadyToComplete::missingField('review_note');
         }
 
+        if (($fields['review_result'] ?? '') === 'query') {
+            /** @var Payment|null $payment */
+            $payment = $task->subject instanceof Payment ? $task->subject : null;
+            $project = $payment?->project ?? $task->project;
+
+            $this->activityRecorder->record(
+                type: 'payment.queried',
+                severity: ActivitySeverity::Warning,
+                messageEn: sprintf(
+                    'Payment sent back to Sales for %s.',
+                    $project?->reference ?? 'project',
+                ),
+                messageAr: sprintf(
+                    'تم إرجاع الدفعة إلى المبيعات للمشروع %s.',
+                    $project?->reference ?? 'project',
+                ),
+                actor: $user,
+                project: $project,
+                subject: $payment,
+                department: $task->department,
+                payload: ['review_note' => $fields['review_note'] ?? null],
+            );
+
+            return;
+        }
+
         if (($fields['review_result'] ?? '') !== 'accepted') {
             return;
         }
