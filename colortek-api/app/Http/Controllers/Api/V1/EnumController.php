@@ -7,7 +7,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\CorrectiveActionStatus;
 use App\Enums\ProjectStage;
+use App\Enums\ResponsibleParty;
+use App\Enums\SiteReadiness;
 use App\Enums\QuotationStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
@@ -29,6 +32,9 @@ final class EnumController extends Controller
             'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
             'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
             'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
+            'site_readiness' => $this->labeledEnumCases(SiteReadiness::cases()),
+            'corrective_action_status' => $this->labeledEnumCases(CorrectiveActionStatus::cases()),
+            'responsible_party' => $this->labeledEnumCases(ResponsibleParty::cases()),
             default => null,
         };
 

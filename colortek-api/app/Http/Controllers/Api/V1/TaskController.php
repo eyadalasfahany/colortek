@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SiteBlockOverrideRequest;
 use App\Http\Requests\TaskBlockRequest;
 use App\Http\Requests\TaskCompleteRequest;
 use App\Http\Resources\AttachmentResource;
@@ -146,6 +147,8 @@ final class TaskController extends Controller
             ],
         ]);
     }
+
+    public function overrideSiteBlock(SiteBlockOverrideRequest $request, int $id): JsonResponse { $task=$this->findTaskOrFail($id); $this->authorize('complete',$task); return response()->json(['data'=>TaskResource::make($this->taskService->overrideSiteBlock($task,$request->user(),$request->validated('reason'))->load(['department','project','definition']))]); }
 
     public function attach(Request $request, int $id): JsonResponse
     {
