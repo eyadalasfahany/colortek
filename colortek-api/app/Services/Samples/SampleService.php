@@ -18,6 +18,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkflowTemplate;
 use App\Repositories\SampleRepository;
+use App\Services\Tasks\TaskService;
 use App\Services\Workflow\WorkflowEngine;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -87,7 +88,7 @@ final class SampleService
                 'reference' => $this->referenceGenerator->forSample($project, $client),
                 'client_id' => $client->id,
                 'project_id' => $project?->id,
-                'root_sample_id' => 0,
+                'root_sample_id' => null,
                 'attempt_number' => 1,
                 'requested_by_user_id' => $user->id,
                 'requested_at' => now(),
@@ -125,6 +126,38 @@ final class SampleService
         $instance = $this->workflowEngine->start($template, $parent);
 
         return $instance->tasks()->whereHas('definition', fn ($q) => $q->where('code', 'sales_create_modification_request'))->firstOrFail();
+    }
+
+    /** @param array<string, mixed> $data */
+    public function requestModification(Sample $parent, array $data, User $user): Sample
+    {
+        $child = app(SampleTaskHandler::class)->createModificationChild($parent, $user, $data);
+        $template = WorkflowTemplate::query()->where('code', 'sample_request')->where('is_active', true)->whereNotNull('published_at')->firstOrFail();
+        $this->workflowEngine->startAtDefinition($template, $child, 'reception_review_sample_request');
+
+        return $child->fresh($this->detailRelations());
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $attachmentIds
+     */
+    public function recordClientDecision(Sample $sample, array $data, User $user, array $attachmentIds): Sample
+    {
+        $task = Task::query()
+            ->where('subject_id', $sample->id)
+            ->where('subject_type', $sample->getMorphClass())
+            ->whereHas('definition', fn ($q) => $q->where('code', 'sales_get_client_decision'))
+            ->whereIn('status', [TaskStatus::Ready, TaskStatus::Claimed, TaskStatus::InProgress, TaskStatus::Waiting])
+            ->first();
+
+        if ($task !== null) {
+            app(TaskService::class)->claim($task, $user);
+            app(TaskService::class)->start($task->fresh(), $user);
+            app(TaskService::class)->complete($task->fresh(), $user, $data, ['client_approval_form' => $attachmentIds['client_approval_form'] ?? $attachmentIds]);
+        }
+
+        return $sample->fresh($this->detailRelations());
     }
 
     /** @param array<string, mixed> $data */

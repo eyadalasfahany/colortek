@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function SamplesDashboardPage() {
   const q = useQuery({
-    queryKey: queryKeys.dashboard.samples-dashboard(),
+    queryKey: queryKeys.dashboard.samples(),
     queryFn: getSamplesDashboard,
   });
 

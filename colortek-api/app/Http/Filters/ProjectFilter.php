@@ -4,33 +4,37 @@ declare(strict_types=1);
 
 namespace App\Http\Filters;
 
+use App\Models\Project;
 use App\Models\User;
 use App\Services\Projects\ProjectVisibility;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 final class ProjectFilter
 {
-    public function __construct(private ProjectVisibility $v) {}
+    public function __construct(private ProjectVisibility $visibility) {}
 
-    public function apply(Request $r, $q, User $u)
+    /** @param Builder<Project> $query @return Builder<Project> */
+    public function apply(Request $request, Builder $query, User $user): Builder
     {
-        $this->v->applyToProjects($q, $u);
-        if ($r->filled('stage')) {
-            $q->where('stage', $r->string('stage')->toString());
+        $this->visibility->applyToProjects($query, $user);
+        if ($request->filled('stage')) {
+            $query->where('stage', $request->string('stage')->toString());
         }
-        if ($r->filled('status')) {
-            $q->where('status', $r->string('status')->toString());
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->toString());
         }
-        if ($r->boolean('blocked')) {
-            $q->whereHas('tasks', fn ($t) => $t->where('status', 'blocked'));
+        if ($request->boolean('blocked')) {
+            $query->whereHas('tasks', fn ($taskQuery) => $taskQuery->where('status', 'blocked'));
         }
-        if ($r->boolean('overdue')) {
-            $q->whereHas('tasks', fn ($t) => $t->where('is_overdue', true));
+        if ($request->boolean('overdue')) {
+            $query->whereHas('tasks', fn ($taskQuery) => $taskQuery->where('is_overdue', true));
         }
-        if ($s = $r->string('q')->toString()) {
-            $q->where(fn ($b) => $b->where('reference', 'like', "%$s%")->orWhere('name', 'like', "%$s%"));
+        $search = $request->string('q')->toString();
+        if ($search !== '') {
+            $query->where(fn ($builder) => $builder->where('reference', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"));
         }
 
-        return $q->orderByDesc('updated_at');
+        return $query->orderByDesc('updated_at');
     }
 }

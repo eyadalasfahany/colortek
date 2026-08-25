@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import type { Key } from 'react-aria-components';
-import { NAV_DATA } from './data';
+import { useAuth } from '@/context/auth-context';
+import { NAV_DATA, filterNavByPermissions } from './data';
 import { CloseIcon, SidebarExpandedIcon, ThreeDots } from './icon';
 import NavItem from './nav-item';
 import { findActiveGroupKey } from './utils';
@@ -27,6 +28,7 @@ export default function Sidebar({
 }) {
     const pathname = usePathname();
     const { theme } = useTheme();
+    const { user } = useAuth();
 
     // Compute which group should be open based on the current route
     const activeGroupKey = useMemo(

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained();
             $table->foreignId('project_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('parent_sample_id')->nullable()->constrained('samples')->nullOnDelete();
-            $table->unsignedBigInteger('root_sample_id');
+            $table->unsignedBigInteger('root_sample_id')->nullable();
             $table->unsignedSmallInteger('attempt_number')->default(1);
             $table->foreignId('requested_by_user_id')->constrained('users');
             $table->timestamp('requested_at');

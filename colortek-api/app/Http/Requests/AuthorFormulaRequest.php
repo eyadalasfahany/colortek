@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+final class AuthorFormulaRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        return [
+            'body' => ['nullable', 'string'],
+            'author_employee_id' => ['required', 'integer', 'exists:employees,id'],
+            'authored_at' => ['nullable', 'date'],
+            'attachment_ids' => ['nullable', 'array'],
+        ];
+    }
+}

@@ -8,10 +8,12 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CorrectiveActionController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\EnumController;
+use App\Http\Controllers\Api\V1\FormulaController;
 use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\SampleController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SiteChecklistItemController;
 use App\Http\Controllers\Api\V1\SiteVisitController;
@@ -21,7 +23,7 @@ use App\Http\Middleware\AuthenticateStream;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
-    Route::get('stream', StreamController::class)->middleware(AuthenticateStream::class);
+    Route::get('stream', [StreamController::class, '__invoke'])->middleware(AuthenticateStream::class);
 
     Route::post('auth/login', [AuthController::class, 'login']);
 
@@ -48,6 +50,16 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('journals', [JournalController::class, 'index']);
         Route::get('journals/{date}', [JournalController::class, 'show']);
+
+        Route::get('samples', [SampleController::class, 'index']);
+        Route::post('samples', [SampleController::class, 'store']);
+        Route::get('samples/{identifier}', [SampleController::class, 'show']);
+        Route::get('samples/{identifier}/chain', [SampleController::class, 'chain']);
+        Route::post('samples/{identifier}/modification', [SampleController::class, 'modification']);
+        Route::post('samples/{identifier}/approval-form', [SampleController::class, 'approvalForm']);
+        Route::post('samples/{identifier}/client-decision', [SampleController::class, 'clientDecision']);
+        Route::get('formulas', [FormulaController::class, 'index']);
+        Route::get('formulas/{id}', [FormulaController::class, 'show'])->whereNumber('id');
 
         Route::get('site-visits', [SiteVisitController::class, 'index']);
         Route::get('site-visits/{id}', [SiteVisitController::class, 'show'])->whereNumber('id');
@@ -82,7 +94,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('dashboard/workshop', [DashboardController::class, 'workshop']);
         Route::get('dashboard/site', [DashboardController::class, 'site']);
         Route::get('dashboard/samples', [DashboardController::class, 'samples']);
-        Route::get('search', SearchController::class);
+        Route::get('search', [SearchController::class, '__invoke']);
 
         Route::get('enums/{name}', [EnumController::class, 'show']);
     });
