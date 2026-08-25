@@ -13,6 +13,11 @@ export const queryKeys = {
   },
   formulas: { list: (sampleReference: string) => ["formulas", "list", sampleReference] as const },
   employees: { list: () => ["employees", "list"] as const },
+  siteVisits: {
+    all: () => ["siteVisits"] as const,
+    detail: (id: number) => ["siteVisits", "detail", id] as const,
+    checklist: () => ["siteVisits", "checklist"] as const,
+  },
   admin: {
     settings: () => ["admin", "settings"] as const,
     holidays: () => ["admin", "holidays"] as const,
