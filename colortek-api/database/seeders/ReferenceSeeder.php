@@ -229,10 +229,6 @@ final class ReferenceSeeder extends Seeder
         ];
 
         foreach ($settings as $key => $value) {
-            if ($value === null) {
-                continue;
-            }
-
             Setting::updateOrCreate(
                 ['key' => $key],
                 ['value' => $value, 'group' => 'general'],

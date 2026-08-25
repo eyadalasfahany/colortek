@@ -8,7 +8,6 @@ use App\Enums\TaskStatus;
 use App\Events\TaskBlocked;
 use App\Events\TaskClaimed;
 use App\Events\TaskCompleted;
-use App\Events\TaskStarted;
 use App\Exceptions\InvalidTaskTransition;
 use App\Exceptions\TaskAlreadyClaimed;
 use App\Models\BlockerCategory;
@@ -80,12 +79,9 @@ final class TaskService
         $this->assertClaimant($task, $user);
 
         return DB::transaction(function () use ($task, $user): Task {
-            $updated = $this->transitionTo($task, TaskStatus::InProgress, $user, afterUpdate: [
+            return $this->transitionTo($task, TaskStatus::InProgress, $user, afterUpdate: [
                 'started_at' => $task->started_at ?? now(),
             ]);
-            DB::afterCommit(fn () => event(new TaskStarted($updated->fresh(), $user)));
-
-            return $updated;
         });
     }
 
