@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\WorkflowInstance;
 use App\Models\WorkflowTaskDefinition;
 use App\Models\WorkflowTemplate;
 use App\Services\Workflow\WorkflowEngine;
@@ -20,6 +21,7 @@ beforeEach(function (): void {
     $this->otherUser = User::factory()->inDepartment('sales')->create();
 });
 
+/** @return array{0: WorkflowInstance, 1: Task} */
 function seedEndpointTwoStepWorkflow(): array
 {
     $user = auth()->user();

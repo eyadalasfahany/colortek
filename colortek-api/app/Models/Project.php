@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+/**
+ * @property array<string, mixed>|null $sla_profile
+ */
 final class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -36,11 +39,13 @@ final class Project extends Model
         ];
     }
 
+    /** @return HasMany<Task, $this> */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
+    /** @return MorphMany<WorkflowInstance, $this> */
     public function workflowInstances(): MorphMany
     {
         return $this->morphMany(WorkflowInstance::class, 'subject');

@@ -12,7 +12,10 @@ use Illuminate\Http\Request;
 
 final class TaskFilter
 {
-    /** @param Builder<Task> $query */
+    /**
+     * @param  Builder<Task>  $query
+     * @return Builder<Task>
+     */
     public function apply(Request $request, Builder $query, User $user): Builder
     {
         $this->applyVisibility($query, $user);

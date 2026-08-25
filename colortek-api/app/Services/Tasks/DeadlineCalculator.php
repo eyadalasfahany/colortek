@@ -21,14 +21,16 @@ final class DeadlineCalculator
     ): ?CarbonImmutable {
         $minutes = null;
 
-        if ($project !== null && is_array($project->sla_profile)) {
+        if ($project !== null && $project->sla_profile !== null) {
             $override = $project->sla_profile[$definition->code] ?? null;
             if ($override !== null) {
                 $minutes = (int) $override;
             }
         }
 
-        $minutes ??= $definition->sla_minutes;
+        if ($minutes === null) {
+            $minutes = $definition->sla_minutes;
+        }
 
         if ($minutes === null) {
             return null;

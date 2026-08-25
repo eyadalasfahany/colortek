@@ -19,6 +19,7 @@ final class BlockerCategory extends Model
     use HasTranslations;
     use SoftDeletes;
 
+    /** @var array<int, string> */
     public array $translatable = ['name'];
 
     protected $fillable = [
@@ -37,6 +38,7 @@ final class BlockerCategory extends Model
         ];
     }
 
+    /** @return BelongsTo<Department, $this> */
     public function notifiesDepartment(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'notifies_department_id');

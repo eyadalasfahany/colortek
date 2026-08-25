@@ -45,11 +45,5 @@ it('carries a three step workflow across three department queues', function (): 
     expect($instance->fresh()->tasks()->where('status', TaskStatus::Ready)->sole()->department->code)
         ->toBe('accounting');
 
-    $taskIds = $instance->fresh()->tasks()->pluck('id');
-
-    expect(ActivityEvent::query()
-        ->where('type', 'task.created')
-        ->whereIn('subject_id', $taskIds)
-        ->distinct()
-        ->count('subject_id'))->toBe(3);
+    expect(ActivityEvent::query()->where('type', 'task.created')->count())->toBe(3);
 });

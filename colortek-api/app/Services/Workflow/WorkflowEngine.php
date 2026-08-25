@@ -30,8 +30,11 @@ final class WorkflowEngine
         }
 
         $project = $subject instanceof Project ? $subject : null;
-        if ($project === null && method_exists($subject, 'project')) {
-            $project = $subject->project;
+        if ($project === null && $subject->relationLoaded('project')) {
+            $relatedProject = $subject->getRelation('project');
+            if ($relatedProject instanceof Project) {
+                $project = $relatedProject;
+            }
         }
 
         $instance = WorkflowInstance::create([

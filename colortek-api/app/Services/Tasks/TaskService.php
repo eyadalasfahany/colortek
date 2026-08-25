@@ -16,6 +16,7 @@ use App\Models\TaskFieldValue;
 use App\Models\TaskStatusEvent;
 use App\Models\User;
 use App\Repositories\TaskRepository;
+use App\Services\Audit\AuditLogger;
 use App\Services\Workflow\WorkflowEngine;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -28,6 +29,7 @@ final class TaskService
         private TaskRepository $repository,
         private TaskValidator $validator,
         private WorkflowEngine $workflowEngine,
+        private AuditLogger $auditLogger,
     ) {}
 
     public function claim(Task $task, User $user): Task
@@ -116,7 +118,11 @@ final class TaskService
         });
     }
 
-    /** @param array<string, mixed> $fields @param array<int|string, mixed> $attachmentIds @return array{task: Task, created: Collection<int, Task>} */
+    /**
+     * @param  array<string, mixed>  $fields
+     * @param  array<string, mixed>  $attachmentIds
+     * @return array{task: Task, created: Collection<int, Task>}
+     */
     public function complete(Task $task, User $user, array $fields, array $attachmentIds): array
     {
         $this->assertClaimant($task, $user);
@@ -156,6 +162,7 @@ final class TaskService
         ]));
     }
 
+    /** @param array<string, mixed> $fields */
     private function persistFieldValues(Task $task, array $fields): void
     {
         foreach ($fields as $key => $value) {
@@ -201,6 +208,15 @@ final class TaskService
             'note' => $note,
             'created_at' => now(),
         ]);
+
+        $this->auditLogger->log(
+            auditable: $task,
+            event: 'updated',
+            user: $user,
+            oldValues: ['status' => $from->value],
+            newValues: ['status' => $to->value],
+            reason: $note,
+        );
     }
 
     private function assertClaimant(Task $task, User $user): void

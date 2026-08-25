@@ -45,4 +45,36 @@ enum TaskStatus: string
     {
         return ! in_array($this, [self::Completed, self::Cancelled], true);
     }
+
+    public function label(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        $labels = [
+            'en' => [
+                'pending' => 'Pending',
+                'waiting' => 'Waiting',
+                'ready' => 'Ready',
+                'claimed' => 'Claimed',
+                'in_progress' => 'In progress',
+                'paused' => 'Paused',
+                'blocked' => 'Blocked',
+                'completed' => 'Completed',
+                'cancelled' => 'Cancelled',
+            ],
+            'ar' => [
+                'pending' => 'معلقة',
+                'waiting' => 'في الانتظار',
+                'ready' => 'جاهزة',
+                'claimed' => 'محجوزة',
+                'in_progress' => 'قيد التنفيذ',
+                'paused' => 'متوقفة',
+                'blocked' => 'محظورة',
+                'completed' => 'مكتملة',
+                'cancelled' => 'ملغاة',
+            ],
+        ];
+
+        return $labels[$locale][$this->value] ?? $labels['en'][$this->value];
+    }
 }

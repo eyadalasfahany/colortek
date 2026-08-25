@@ -19,10 +19,11 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasApiTokens;
 
+    /** @use HasFactory<UserFactory> */
     use HasFactory;
+
     use HasRoles;
     use Notifiable;
 
@@ -38,11 +39,13 @@ class User extends Authenticatable
         ];
     }
 
+    /** @return BelongsToMany<Department, $this> */
     public function departments(): BelongsToMany
     {
         return $this->belongsToMany(Department::class)->withPivot('is_supervisor');
     }
 
+    /** @return BelongsTo<Department, $this> */
     public function primaryDepartment(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'primary_department_id');

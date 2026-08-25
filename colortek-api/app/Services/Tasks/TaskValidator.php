@@ -9,21 +9,29 @@ use App\Models\Task;
 
 final class TaskValidator
 {
-    /** @param array<string, mixed> $fields @param array<string, list<int>> $attachmentIds */
+    /**
+     * @param  array<string, mixed>  $fields
+     * @param  array<string, mixed>  $attachmentIds
+     */
     public function assertReadyToComplete(Task $task, array $fields, array $attachmentIds): void
     {
         $task->loadMissing('definition');
 
-        $requiredFields = $task->definition?->required_fields ?? [];
+        $definition = $task->definition;
+        if ($definition === null) {
+            return;
+        }
+
+        $requiredFields = $definition->required_fields ?? [];
         foreach ($requiredFields as $field) {
             if (! array_key_exists($field, $fields) || $fields[$field] === null || $fields[$field] === '') {
                 throw TaskNotReadyToComplete::missingField((string) $field);
             }
         }
 
-        $requiredAttachments = $task->definition?->required_attachment_types ?? [];
+        $requiredAttachments = $definition->required_attachment_types ?? [];
         foreach ($requiredAttachments as $type) {
-            $typeIds = $attachmentIds[$type] ?? (array_is_list($attachmentIds) ? $attachmentIds : []);
+            $typeIds = $attachmentIds[$type] ?? [];
             if ($typeIds === []) {
                 throw TaskNotReadyToComplete::missingAttachment((string) $type);
             }

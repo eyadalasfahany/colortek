@@ -1,8 +1,11 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    - vendor/mrpunyapal/peststan/extension.neon
 parameters:
     paths:
         - app
         - database
         - tests
     level: 6
+    peststan:
+        testCaseClass: Tests\TestCase

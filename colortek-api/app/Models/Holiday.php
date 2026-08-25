@@ -5,14 +5,20 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\HolidayType;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property CarbonImmutable $date
+ * @property bool $is_recurring
+ */
 final class Holiday extends Model
 {
     use HasTranslations;
 
+    /** @var array<int, string> */
     public array $translatable = ['name'];
 
     protected $fillable = [
@@ -32,6 +38,7 @@ final class Holiday extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_user_id');

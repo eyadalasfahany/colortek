@@ -32,16 +32,19 @@ final class WorkflowTemplate extends Model
         ];
     }
 
+    /** @return HasMany<WorkflowTaskDefinition, $this> */
     public function definitions(): HasMany
     {
         return $this->hasMany(WorkflowTaskDefinition::class, 'template_id');
     }
 
+    /** @return HasMany<WorkflowTransition, $this> */
     public function transitions(): HasMany
     {
         return $this->hasMany(WorkflowTransition::class, 'template_id');
     }
 
+    /** @return HasMany<WorkflowInstance, $this> */
     public function instances(): HasMany
     {
         return $this->hasMany(WorkflowInstance::class, 'template_id');

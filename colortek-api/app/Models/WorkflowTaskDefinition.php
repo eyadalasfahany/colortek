@@ -11,6 +11,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property list<string>|null $required_fields
+ * @property list<string>|null $required_attachment_types
+ * @property int|null $sla_minutes
+ * @property WorkflowTemplate $template
+ */
 final class WorkflowTaskDefinition extends Model
 {
     /** @use HasFactory<WorkflowTaskDefinitionFactory> */
@@ -50,21 +56,25 @@ final class WorkflowTaskDefinition extends Model
         ];
     }
 
+    /** @return BelongsTo<WorkflowTemplate, $this> */
     public function template(): BelongsTo
     {
         return $this->belongsTo(WorkflowTemplate::class, 'template_id');
     }
 
+    /** @return BelongsTo<Department, $this> */
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
+    /** @return HasMany<WorkflowTransition, $this> */
     public function incomingTransitions(): HasMany
     {
         return $this->hasMany(WorkflowTransition::class, 'to_task_definition_id');
     }
 
+    /** @return HasMany<WorkflowTransition, $this> */
     public function outgoingTransitions(): HasMany
     {
         return $this->hasMany(WorkflowTransition::class, 'from_task_definition_id');

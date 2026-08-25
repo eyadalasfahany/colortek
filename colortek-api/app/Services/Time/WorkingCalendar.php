@@ -13,6 +13,7 @@ final class WorkingCalendar
 {
     private const MAX_DAYS_SCANNED = 400;
 
+    /** @var Collection<int, string>|null */
     private ?Collection $holidayKeys = null;
 
     public function isWorkingTime(CarbonImmutable $at): bool
@@ -136,6 +137,7 @@ final class WorkingCalendar
         return $on->setTime($hour, $minute, 0);
     }
 
+    /** @return Collection<int, string> */
     private function holidayKeys(): Collection
     {
         return $this->holidayKeys ??= Holiday::all()->flatMap(

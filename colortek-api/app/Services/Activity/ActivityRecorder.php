@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ActivityRecorder
 {
+    /**
+     * @param  array<string, mixed>|null  $payload
+     */
     public function record(
         string $type,
         ActivitySeverity $severity,

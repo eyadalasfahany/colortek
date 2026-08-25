@@ -20,7 +20,10 @@ abstract class BaseRepository
     /** @return TModel|null */
     public function find(int $id): ?Model
     {
-        return $this->modelClass::query()->find($id);
+        /** @var TModel|null $model */
+        $model = $this->modelClass::query()->find($id);
+
+        return $model;
     }
 
     /** @param list<string> $relations @return TModel */
@@ -47,19 +50,28 @@ abstract class BaseRepository
     {
         $model->update($data);
 
-        return $model->fresh();
+        return $model->fresh() ?? $model;
     }
 
-    /** @return LengthAwarePaginator<int, TModel> */
-    public function paginate(Builder $query, int $perPage = 15): LengthAwarePaginator
+    /**
+     * @param  Builder<TModel>  $query
+     * @return LengthAwarePaginator<int, TModel>
+     */
+    public function paginate(Builder $query, int $perPage = 15)
     {
-        return $query->paginate($perPage);
+        /** @var LengthAwarePaginator<int, TModel> $paginator */
+        $paginator = $query->paginate($perPage);
+
+        return $paginator;
     }
 
     /** @return Builder<TModel> */
     protected function query(): Builder
     {
-        return $this->modelClass::query();
+        /** @var Builder<TModel> $builder */
+        $builder = $this->modelClass::query();
+
+        return $builder;
     }
 
     abstract protected function notFoundMessage(): string;

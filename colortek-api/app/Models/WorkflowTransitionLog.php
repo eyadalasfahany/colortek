@@ -30,16 +30,19 @@ final class WorkflowTransitionLog extends Model
         ];
     }
 
+    /** @return BelongsTo<WorkflowInstance, $this> */
     public function instance(): BelongsTo
     {
         return $this->belongsTo(WorkflowInstance::class, 'instance_id');
     }
 
+    /** @return BelongsTo<WorkflowTransition, $this> */
     public function transition(): BelongsTo
     {
         return $this->belongsTo(WorkflowTransition::class, 'transition_id');
     }
 
+    /** @return BelongsTo<Task, $this> */
     public function sourceTask(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'source_task_id');

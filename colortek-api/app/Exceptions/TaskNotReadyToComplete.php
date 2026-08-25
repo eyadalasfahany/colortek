@@ -33,7 +33,7 @@ final class TaskNotReadyToComplete extends RuntimeException
         return new self(
             __('The :field field is required before this task can be completed.', ['field' => $field]),
             'task.missing_required_field',
-            ['fields' => [$field => [__('The :field field is required.', ['field' => $field])]]],
+            ['fields.'.$field => [__('The :field field is required.', ['field' => $field])]],
         );
     }
 

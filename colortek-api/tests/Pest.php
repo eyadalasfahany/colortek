@@ -26,13 +26,9 @@ use Tests\TestCase;
 |
 */
 
-pest()->extend(TestCase::class)
-    ->use(RefreshDatabase::class)
-    ->in('Feature');
+uses(TestCase::class, RefreshDatabase::class)->in('Feature');
 
-pest()->extend(TestCase::class)
-    ->use(RefreshDatabase::class)
-    ->in('Unit');
+uses(TestCase::class, RefreshDatabase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

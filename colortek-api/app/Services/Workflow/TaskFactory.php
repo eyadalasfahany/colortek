@@ -11,13 +11,18 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\WorkflowInstance;
 use App\Models\WorkflowTaskDefinition;
+use App\Services\Audit\AuditLogger;
 use App\Services\Tasks\DeadlineCalculator;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 final class TaskFactory
 {
-    public function __construct(private DeadlineCalculator $deadlineCalculator) {}
+    public function __construct(
+        private DeadlineCalculator $deadlineCalculator,
+        private AuditLogger $auditLogger,
+    ) {}
 
     public function createForDefinition(
         WorkflowInstance $instance,
@@ -28,25 +33,40 @@ final class TaskFactory
 
         $status = $this->applySiteHold($definition, $instance->project, $status);
 
-        $task = Task::create([
-            'reference' => $this->generateReference($instance, $definition),
-            'instance_id' => $instance->id,
-            'task_definition_id' => $definition->id,
-            'project_id' => $instance->project_id,
-            'subject_type' => $instance->subject_type,
-            'subject_id' => $instance->subject_id,
-            'title' => $definition->title_en,
-            'instructions' => $definition->instructions_en,
-            'department_id' => $definition->department_id,
-            'status' => $status,
-            'priority' => $definition->priority ?? TaskPriority::Normal,
-            'due_at' => $this->deadlineCalculator->for(
-                $definition,
-                $instance->project,
-                CarbonImmutable::now(),
-            ),
-            'ready_at' => $status === TaskStatus::Ready ? now() : null,
-        ]);
+        $task = DB::transaction(function () use ($instance, $definition, $status): Task {
+            $created = Task::create([
+                'reference' => $this->generateReference($instance, $definition),
+                'instance_id' => $instance->id,
+                'task_definition_id' => $definition->id,
+                'project_id' => $instance->project_id,
+                'subject_type' => $instance->subject_type,
+                'subject_id' => $instance->subject_id,
+                'title' => $definition->title_en,
+                'instructions' => $definition->instructions_en,
+                'department_id' => $definition->department_id,
+                'status' => $status,
+                'priority' => $definition->priority ?? TaskPriority::Normal,
+                'due_at' => $this->deadlineCalculator->for(
+                    $definition,
+                    $instance->project,
+                    CarbonImmutable::now(),
+                ),
+                'ready_at' => $status === TaskStatus::Ready ? now() : null,
+            ]);
+
+            $this->auditLogger->log(
+                auditable: $created,
+                event: 'created',
+                user: null,
+                newValues: [
+                    'reference' => $created->reference,
+                    'status' => $created->status->value,
+                    'department_id' => $created->department_id,
+                ],
+            );
+
+            return $created;
+        });
 
         event(new TaskCreated($task));
 
