@@ -1,0 +1,2 @@
+<?php declare(strict_types=1); namespace App\Http\Resources\Admin; use Illuminate\Http\Resources\Json\JsonResource;
+/** @mixin \App\Models\Holiday */ final class HolidayResource extends JsonResource { public function toArray($r): array { return ['id'=>$this->id,'date'=>$this->date->format('Y-m-d'),'name'=>$this->getTranslations('name'),'type'=>$this->type->value,'is_recurring'=>$this->is_recurring,'created_by'=>$this->whenLoaded('createdBy',fn()=>['id'=>$this->createdBy->id,'name'=>$this->createdBy->name])]; }}
