@@ -42,6 +42,20 @@ class AttachmentFactory extends Factory
         ]);
     }
 
+    public function samplePhoto(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => 'sample_photo',
+        ]);
+    }
+
+    public function clientApprovalForm(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'type' => 'client_approval_form',
+        ]);
+    }
+
     public function fromUploadedFile(UploadedFile $file, User $user): static
     {
         return $this->state(function () use ($file, $user): array {

@@ -236,6 +236,8 @@ final class ReferenceSeeder extends Seeder
         }
 
         $this->call(PaymentWorkflowSeeder::class);
+        $this->call(SampleWorkflowSeeder::class);
+        $this->call(SampleModificationWorkflowSeeder::class);
         $this->call(SiteChecklistSeeder::class);
         $this->call(SiteVisitWorkflowSeeder::class);
     }

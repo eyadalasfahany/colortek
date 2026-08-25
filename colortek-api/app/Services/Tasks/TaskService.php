@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Repositories\TaskRepository;
 use App\Services\Audit\AuditLogger;
 use App\Services\Payments\PaymentTaskHandler;
+use App\Services\Samples\SampleTaskHandler;
 use App\Services\Site\SiteBlockService;
 use App\Services\Site\SiteVisitTaskHandler;
 use App\Services\Workflow\WorkflowEngine;
@@ -34,6 +35,7 @@ final class TaskService
         private WorkflowEngine $workflowEngine,
         private AuditLogger $auditLogger,
         private PaymentTaskHandler $paymentTaskHandler,
+        private SampleTaskHandler $sampleTaskHandler,
         private SiteVisitTaskHandler $siteVisitTaskHandler,
         private SiteBlockService $siteBlockService,
     ) {}
@@ -140,6 +142,7 @@ final class TaskService
         DB::transaction(function () use ($task, $user, $fields, $attachmentIds, &$createdTasks, &$completed): void {
             $this->validator->assertReadyToComplete($task, $fields, $attachmentIds);
             $this->paymentTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
+            $this->sampleTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
             $this->siteVisitTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
             $this->persistFieldValues($task, $fields);
 
@@ -150,6 +153,7 @@ final class TaskService
 
             $createdTasks = $this->workflowEngine->advance($completed);
             $this->paymentTaskHandler->handleAfterComplete($completed, $user, $fields);
+            $this->sampleTaskHandler->handleAfterComplete($completed, $user, $fields);
             $this->siteVisitTaskHandler->handleAfterComplete($completed, $user, $fields);
         });
 

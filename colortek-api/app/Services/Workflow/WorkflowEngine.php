@@ -7,6 +7,7 @@ namespace App\Services\Workflow;
 use App\Enums\TaskStatus;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Models\Sample;
 use App\Models\SiteVisit;
 use App\Models\Task;
 use App\Models\WorkflowInstance;
@@ -35,6 +36,7 @@ final class WorkflowEngine
             $subject instanceof Project => $subject,
             $subject instanceof Payment => $subject->loadMissing('project')->project,
             $subject instanceof SiteVisit => $subject->loadMissing('project')->project,
+            $subject instanceof Sample => $subject->loadMissing('project')->project,
             default => null,
         };
         if ($project === null && $subject->relationLoaded('project')) {
@@ -57,6 +59,33 @@ final class WorkflowEngine
         foreach ($entryPoints as $definition) {
             $this->taskFactory->createForDefinition($instance, $definition, TaskStatus::Ready);
         }
+
+        return $instance->load('tasks');
+    }
+
+    public function startAtDefinition(WorkflowTemplate $template, Model $subject, string $definitionCode): WorkflowInstance
+    {
+        if ($template->published_at === null) {
+            throw new RuntimeException('Cannot instantiate a draft workflow template.');
+        }
+
+        $project = match (true) {
+            $subject instanceof Project => $subject,
+            $subject instanceof Sample => $subject->loadMissing('project')->project,
+            default => null,
+        };
+
+        $instance = WorkflowInstance::create([
+            'template_id' => $template->id,
+            'subject_type' => $subject->getMorphClass(),
+            'subject_id' => $subject->getKey(),
+            'project_id' => $project?->id,
+            'status' => 'running',
+            'started_at' => now(),
+        ]);
+
+        $definition = $template->definitions()->where('code', $definitionCode)->firstOrFail();
+        $this->taskFactory->createForDefinition($instance, $definition, TaskStatus::Ready);
 
         return $instance->load('tasks');
     }
