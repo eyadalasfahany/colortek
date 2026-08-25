@@ -13,6 +13,20 @@ export const NAV_DATA = [
     label: "MAIN MENU",
     items: [
       {
+        title: "Tasks",
+        icon: <TableIcon />,
+        items: [
+          {
+            title: "Queue",
+            url: "/queue",
+          },
+          {
+            title: "My Tasks",
+            url: "/my-tasks",
+          },
+        ],
+      },
+      {
         title: "Dashboard",
         icon: <HomeIcon />,
         items: [
