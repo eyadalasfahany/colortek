@@ -84,7 +84,7 @@ final class EnumController extends Controller
     }
 
     /**
-     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus>  $cases
+     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus|SiteReadiness|CorrectiveActionStatus|ResponsibleParty>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

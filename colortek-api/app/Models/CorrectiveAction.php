@@ -22,4 +22,16 @@ final class CorrectiveAction extends Model
     {
         return $this->belongsTo(SiteChecklistItem::class, 'checklist_item_id');
     }
+
+    /** @return BelongsTo<SiteVisit, $this> */
+    public function siteVisit(): BelongsTo
+    {
+        return $this->belongsTo(SiteVisit::class, 'site_visit_id');
+    }
+
+    /** @return BelongsTo<Task, $this> */
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'task_id');
+    }
 }

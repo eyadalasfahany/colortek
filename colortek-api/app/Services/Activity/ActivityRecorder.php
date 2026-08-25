@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Activity;
 
 use App\Enums\ActivitySeverity;
-use App\Events\ActivityRecorded;
 use App\Models\ActivityEvent;
 use App\Models\Department;
 use App\Models\Project;
@@ -29,7 +28,7 @@ class ActivityRecorder
         ?string $visibleToPermission = null,
         ?array $payload = null,
     ): ActivityEvent {
-        $event = ActivityEvent::query()->create([
+        return ActivityEvent::query()->create([
             'type' => $type,
             'severity' => $severity,
             'message_en' => $messageEn,
@@ -43,9 +42,5 @@ class ActivityRecorder
             'payload' => $payload,
             'created_at' => now(),
         ]);
-
-        event(new ActivityRecorded($event));
-
-        return $event;
     }
 }

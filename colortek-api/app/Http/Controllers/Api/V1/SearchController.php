@@ -9,61 +9,24 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\Task;
 use App\Services\Projects\ProjectVisibility;
-use Illuminate\Http\Request;
 
 final class SearchController extends Controller
 {
-    public function __construct(private ProjectVisibility $visibility) {}
+    public function __construct(private ProjectVisibility $v) {}
 
-    public function __invoke(Request $request)
+    public function __invoke($r)
     {
-        $query = trim($request->string('q')->toString());
-
-        if ($query === '') {
+        $q = trim($r->string('q')->toString());
+        if ($q === '') {
             return response()->json(['data' => []]);
         }
+        $u = $r->user();
+        $pq = Project::where(fn ($b) => $b->where('reference', 'like', "%$q%")->orWhere('name', 'like', "%$q%"));
+        $this->v->applyToProjects($pq, $u);
+        $ids = (clone $pq)->pluck('id');
 
-        $user = $request->user();
-        $projectQuery = Project::query()->where(
-            fn ($builder) => $builder
-                ->where('reference', 'like', "%{$query}%")
-                ->orWhere('name', 'like', "%{$query}%"),
-        );
-        $this->visibility->applyToProjects($projectQuery, $user);
-        $projectIds = (clone $projectQuery)->pluck('id');
-
-        return response()->json([
-            'data' => [
-                'projects' => $projectQuery->limit(10)->get()->map(fn (Project $project) => [
-                    'type' => 'project',
-                    'id' => $project->id,
-                    'label' => $project->reference.' — '.$project->name,
-                    'reference' => $project->reference,
-                ]),
-                'tasks' => Task::query()
-                    ->whereIn('project_id', $projectIds)
-                    ->where('reference', 'like', "%{$query}%")
-                    ->with('project')
-                    ->limit(10)
-                    ->get()
-                    ->map(fn (Task $task) => [
-                        'type' => 'task',
-                        'id' => $task->id,
-                        'label' => $task->reference.' — '.$task->localizedTitle(),
-                        'project_reference' => $task->project?->reference,
-                    ]),
-                'clients' => Client::query()
-                    ->where('name', 'like', "%{$query}%")
-                    ->limit(5)
-                    ->get()
-                    ->map(fn (Client $client) => [
-                        'type' => 'client',
-                        'id' => $client->id,
-                        'label' => $client->name,
-                    ]),
-                'samples' => [],
-                'site_visits' => [],
-            ],
-        ]);
+        return response()->json(['data' => ['projects' => $pq->limit(10)->get()->map(fn ($p) => ['type' => 'project', 'id' => $p->id, 'label' => $p->reference.' — '.$p->name, 'reference' => $p->reference]),
+            'tasks' => Task::whereIn('project_id', $ids)->where('reference', 'like', "%$q%")->with('project')->limit(10)->get()->map(fn ($t) => ['type' => 'task', 'id' => $t->id, 'label' => $t->reference.' — '.$t->localizedTitle(), 'project_reference' => $t->project?->reference]),
+            'clients' => Client::where('name', 'like', "%$q%")->limit(5)->get()->map(fn ($c) => ['type' => 'client', 'id' => $c->id, 'label' => $c->name]), 'samples' => [], 'site_visits' => []]]);
     }
 }

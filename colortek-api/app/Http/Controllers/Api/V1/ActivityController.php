@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Filters\ActivityFilter;
 use App\Http\Resources\ActivityEventResource;
 use App\Services\Activity\ActivityQuery;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class ActivityController extends Controller
@@ -18,7 +17,7 @@ final class ActivityController extends Controller
         private ActivityFilter $activityFilter,
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $query = $this->activityFilter->apply(
             $request,

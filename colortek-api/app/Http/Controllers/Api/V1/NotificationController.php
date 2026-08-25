@@ -6,36 +6,30 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class NotificationController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index($r)
     {
-        return NotificationResource::collection(
-            $request->user()->notifications()->latest()->paginate($request->integer('per_page', 20)),
-        )->response();
+        return NotificationResource::collection($r->user()->notifications()->latest()->paginate($r->integer('per_page', 20)))->response();
     }
 
-    public function unreadCount(Request $request): JsonResponse
+    public function unreadCount($r)
     {
-        return response()->json([
-            'data' => ['count' => $request->user()->unreadNotifications()->count()],
-        ]);
+        return response()->json(['data' => ['count' => $r->user()->unreadNotifications()->count()]]);
     }
 
-    public function markRead(Request $request, string $id): JsonResponse
+    public function markRead($r, $id)
     {
-        $notification = $request->user()->notifications()->whereKey($id)->firstOrFail();
-        $notification->markAsRead();
+        $n = $r->user()->notifications()->whereKey($id)->firstOrFail();
+        $n->markAsRead();
 
-        return response()->json(['data' => NotificationResource::make($notification->fresh())]);
+        return response()->json(['data' => NotificationResource::make($n->fresh())]);
     }
 
-    public function markAllRead(Request $request): JsonResponse
+    public function markAllRead($r)
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $r->user()->unreadNotifications->markAsRead();
 
         return response()->json(['data' => null]);
     }

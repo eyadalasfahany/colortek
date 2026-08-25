@@ -9,41 +9,34 @@ use App\Services\Dashboard\ControlRoomService;
 use App\Services\Dashboard\SamplesDashboardService;
 use App\Services\Dashboard\SiteDashboardService;
 use App\Services\Dashboard\WorkshopDashboardService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class DashboardController extends Controller
 {
-    public function __construct(
-        private ControlRoomService $controlRoom,
-        private WorkshopDashboardService $workshop,
-        private SiteDashboardService $site,
-        private SamplesDashboardService $samples,
-    ) {}
+    public function __construct(private ControlRoomService $c, private WorkshopDashboardService $w, private SiteDashboardService $s, private SamplesDashboardService $sa) {}
 
-    public function controlRoom(Request $request): JsonResponse
+    public function controlRoom($r)
     {
-        abort_unless($request->user()->can('project.view_all'), 403);
+        abort_unless($r->user()->can('project.view_all'), 403);
 
-        return response()->json(['data' => $this->controlRoom->build($request->user())]);
+        return response()->json(['data' => $this->c->build($r->user())]);
     }
 
-    public function workshop(Request $request): JsonResponse
+    public function workshop($r)
     {
-        return response()->json(['data' => $this->workshop->build($request->user())]);
+        return response()->json(['data' => $this->w->build($r->user())]);
     }
 
-    public function site(Request $request): JsonResponse
+    public function site($r)
     {
-        abort_unless($request->user()->can('site.view'), 403);
+        abort_unless($r->user()->can('site.view'), 403);
 
-        return response()->json(['data' => $this->site->build($request->user())]);
+        return response()->json(['data' => $this->s->build($r->user())]);
     }
 
-    public function samples(Request $request): JsonResponse
+    public function samples($r)
     {
-        abort_unless($request->user()->can('sample.view'), 403);
+        abort_unless($r->user()->can('sample.view'), 403);
 
-        return response()->json(['data' => $this->samples->build($request->user())]);
+        return response()->json(['data' => $this->sa->build($r->user())]);
     }
 }
