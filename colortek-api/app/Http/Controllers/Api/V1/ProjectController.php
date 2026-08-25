@@ -26,7 +26,7 @@ final class ProjectController extends Controller
     {
         $this->authorize('viewAny', Project::class);
 
-        return ProjectListResource::collection($this->pf->apply($r, Project::with(['client', 'salesUser']), $request->user())->paginate(15))->response();
+        return ProjectListResource::collection($this->pf->apply($request, Project::with(['client', 'salesUser']), $request->user())->paginate(15))->response();
     }
 
     public function show(Request $request, $id)
@@ -99,6 +99,6 @@ final class ProjectController extends Controller
         $this->authorize('view', $p);
         $request->merge(['project_id' => $id]);
 
-        return ActivityEventResource::collection($this->af->apply($r, $this->aq->forUser($request->user()), $request->user())->paginate(15))->response();
+        return ActivityEventResource::collection($this->af->apply($request, $this->aq->forUser($request->user()), $request->user())->paginate(15))->response();
     }
 }

@@ -9,12 +9,13 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\Task;
 use App\Services\Projects\ProjectVisibility;
+use Illuminate\Http\Request;
 
 final class SearchController extends Controller
 {
     public function __construct(private ProjectVisibility $v) {}
 
-    public function __invoke($r)
+    public function __invoke(Request $request)
     {
         $q = trim($request->string('q')->toString());
         if ($q === '') {

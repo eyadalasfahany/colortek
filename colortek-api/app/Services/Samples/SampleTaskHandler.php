@@ -21,6 +21,7 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Models\WorkflowTemplate;
 use App\Services\Activity\ActivityRecorder;
+use App\Services\Audit\AuditLogger;
 use App\Services\Workflow\WorkflowEngine;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,7 @@ final class SampleTaskHandler
         private SampleReferenceGenerator $referenceGenerator,
         private ActivityRecorder $activityRecorder,
         private WorkflowEngine $workflowEngine,
+        private AuditLogger $auditLogger,
     ) {}
 
     /**
@@ -51,7 +53,7 @@ final class SampleTaskHandler
             'manager_approve_sample' => $this->handleManagerApprove($task, $user, $fields),
             'workshop_make_sample' => $this->handleWorkshopComplete($task, $user, $attachmentIds),
             'tinting_author_formula' => $this->handleTintingAuthor($task, $user, $fields, $attachmentIds),
-            'reception_register_formula' => $this->handleReceptionRegister($task, $user),
+            'reception_register_formula' => $this->handleReceptionRegister($task, $user, $fields),
             'sales_get_client_decision' => $this->handleClientDecision($task, $user, $fields, $attachmentIds),
             'sales_create_modification_request' => $this->handleModificationRequest($task, $user, $fields),
             default => null,
@@ -72,6 +74,14 @@ final class SampleTaskHandler
     {
         return DB::transaction(function () use ($parent, $user, $data): Sample {
             $parent->update(['status' => SampleStatus::Superseded]);
+            Formula::query()
+                ->where('sample_id', $parent->id)
+                ->whereNotIn('status', [FormulaStatus::Superseded])
+                ->update(['status' => FormulaStatus::Superseded]);
+            Formula::query()
+                ->where('sample_id', $parent->id)
+                ->whereNotIn('status', [FormulaStatus::Superseded, FormulaStatus::Approved])
+                ->update(['status' => FormulaStatus::Superseded]);
             $client = $parent->client;
             $project = $parent->project;
             $attempt = $parent->attempt_number + 1;
@@ -210,7 +220,8 @@ final class SampleTaskHandler
         }
     }
 
-    private function handleReceptionRegister(Task $task, User $user): void
+    /** @param array<string, mixed> $fields */
+    private function handleReceptionRegister(Task $task, User $user, array $fields): void
     {
         $sample = $this->sampleFromTask($task);
         $formula = Formula::query()->where('sample_id', $sample->id)->where('status', FormulaStatus::Draft)->latest('version')->first();
@@ -218,11 +229,27 @@ final class SampleTaskHandler
             throw new TaskNotReadyToComplete(__('No draft formula to register.'), 'formula.missing');
         }
 
-        $formula->update([
+        $updates = [
             'status' => FormulaStatus::Registered,
             'registered_by_user_id' => $user->id,
             'registered_at' => now(),
-        ]);
+        ];
+
+        $correction = trim((string) ($fields['corrections'] ?? ''));
+        if ($correction !== '') {
+            $originalBody = (string) ($formula->body ?? '');
+            $updates['body'] = trim($originalBody."\n[Correction] ".$correction);
+            $this->auditLogger->log(
+                auditable: $formula,
+                event: 'corrected',
+                user: $user,
+                oldValues: ['body' => $originalBody],
+                newValues: ['body' => $updates['body']],
+                reason: $correction,
+            );
+        }
+
+        $formula->update($updates);
         $sample->update(['status' => SampleStatus::ReadyForClientApproval]);
     }
 

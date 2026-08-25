@@ -131,6 +131,10 @@ final class SampleService
     /** @param array<string, mixed> $data */
     public function requestModification(Sample $parent, array $data, User $user): Sample
     {
+        if ($parent->status !== SampleStatus::RejectedByClient) {
+            throw new TaskNotReadyToComplete(__('Modifications are only allowed after client rejection.'), 'sample.modification_not_allowed');
+        }
+
         $child = app(SampleTaskHandler::class)->createModificationChild($parent, $user, $data);
         $template = WorkflowTemplate::query()->where('code', 'sample_request')->where('is_active', true)->whereNotNull('published_at')->firstOrFail();
         $this->workflowEngine->startAtDefinition($template, $child, 'reception_review_sample_request');
