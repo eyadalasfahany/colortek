@@ -41,6 +41,10 @@ final class SampleController extends Controller
     {
         $this->authorize('create', Sample::class);
 
+        if (! $request->filled('project_id') && ! $request->user()->can('sample.create_presale')) {
+            abort(403, __('You cannot create a pre-sale sample without permission.'));
+        }
+
         $result = $this->sampleService->start($request->validated(), $request->user());
 
         return response()->json([
@@ -97,12 +101,13 @@ final class SampleController extends Controller
         ], 201);
     }
 
-    public function approvalForm(string $identifier): Response
+    public function approvalForm(Request $request, string $identifier): Response
     {
         $sample = $this->sampleService->findOrFail($identifier, ['client', 'project.quotation']);
         $this->authorize('recordClientDecision', $sample);
 
         $pdf = $this->approvalFormGenerator->generate($sample);
+        $this->sampleService->markApprovalFormGenerated($sample, $request->user());
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
