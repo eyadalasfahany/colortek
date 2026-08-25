@@ -1,1 +1,24 @@
-<?php declare(strict_types=1); namespace App\Http\Requests\Admin; use Illuminate\Foundation\Http\FormRequest; use Illuminate\Validation\Rule; final class EmployeeRequest extends FormRequest { public function authorize(): bool { return true; } public function rules(): array { $id=$this->route('id'); return ['code'=>['required','string','max:50',Rule::unique('employees','code')->ignore($id)->whereNull('deleted_at')],'name'=>['required','string','max:150'],'department_id'=>['required','integer','exists:departments,id'],'user_id'=>['nullable','integer','exists:users,id'],'active'=>['sometimes','boolean']]; }}
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+final class EmployeeRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        $id = $this->route('id');
+
+        return ['code' => ['required', 'string', 'max:50', Rule::unique('employees', 'code')->ignore($id)->whereNull('deleted_at')], 'name' => ['required', 'string', 'max:150'], 'department_id' => ['required', 'integer', 'exists:departments,id'], 'user_id' => ['nullable', 'integer', 'exists:users,id'], 'active' => ['sometimes', 'boolean']];
+    }
+}

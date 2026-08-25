@@ -225,8 +225,6 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         </Card>
       ) : null}
 
-      {paymentSubject ? <PaymentSubjectPanel subject={paymentSubject} /> : null}
-
       {task.previous_outputs && task.previous_outputs.length > 0 ? (
         <Card className="mb-4">
           <CardTitle className="mb-4 text-lg">What the last person did</CardTitle>

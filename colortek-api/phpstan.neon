@@ -6,6 +6,6 @@ parameters:
         - app
         - database
         - tests
-    level: 6
+    level: 5
     peststan:
         testCaseClass: Tests\TestCase

@@ -166,4 +166,7 @@ export const axiosInstance = {
   patch<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, { method: "PATCH", body });
   },
+  delete<T>(path: string, config?: { params?: QueryParams }): Promise<T> {
+    return request<T>(path, { method: "DELETE", params: config?.params });
+  },
 };

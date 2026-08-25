@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\AuditLog;
 use App\Models\Holiday;
 use App\Models\Setting;
+use App\Models\SiteChecklistItem;
 use App\Models\User;
 use Database\Seeders\ReferenceSeeder;
 use Laravel\Sanctum\Sanctum;
@@ -48,8 +50,8 @@ it('allows admin to patch user details but not assign roles', function (): void 
 });
 
 it('seeds five checklist items', function (): void {
-    expect(\App\Models\SiteChecklistItem::where('code', 'humidity')->exists())->toBeTrue();
-    expect(\App\Models\SiteChecklistItem::count())->toBe(5);
+    expect(SiteChecklistItem::where('code', 'humidity')->exists())->toBeTrue();
+    expect(SiteChecklistItem::count())->toBe(5);
 });
 
 it('calendar impact returns a count', function (): void {
@@ -84,7 +86,7 @@ it('lists failure diagnostics for settings admin', function (): void {
 });
 
 it('shows coverage warning when no sample approver exists', function (): void {
-    Role::findByName('approver', 'web')?->users()->detach();
+    Role::findByName('approver', 'web')->users()->detach();
     Sanctum::actingAs($this->superAdmin);
     $this->getJson('/api/v1/admin/access/coverage')
         ->assertOk()
@@ -98,5 +100,5 @@ it('patches settings and writes audit row when confirmed', function (): void {
         'confirm' => true,
     ])->assertOk();
     expect(Setting::get('work_end'))->toBe('16:00');
-    expect(\App\Models\AuditLog::query()->where('event', 'updated')->exists())->toBeTrue();
+    expect(AuditLog::query()->where('event', 'updated')->exists())->toBeTrue();
 });

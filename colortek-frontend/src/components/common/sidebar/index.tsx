@@ -9,7 +9,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import type { Key } from 'react-aria-components';
+import { usePermissions } from '@/hooks/use-permissions';
 import { NAV_DATA } from './data';
+import { ADMIN_NAV } from './admin-nav-data';
 import { CloseIcon, SidebarExpandedIcon, ThreeDots } from './icon';
 import NavItem from './nav-item';
 import { findActiveGroupKey } from './utils';
@@ -28,10 +30,33 @@ export default function Sidebar({
     const pathname = usePathname();
     const { theme } = useTheme();
 
+    const { canAny } = usePermissions();
+
+    const navSections = useMemo(() => {
+        const adminItems = ADMIN_NAV.items
+            .map((item) => ({
+                title: item.title,
+                icon: item.icon,
+                items: item.items
+                    ?.filter((sub) => {
+                        const perms = sub.permission.split('|');
+                        return canAny(...perms);
+                    })
+                    .map(({ title, url }) => ({ title, url })),
+            }))
+            .filter((item) => item.items && item.items.length > 0);
+
+        if (adminItems.length === 0) {
+            return NAV_DATA;
+        }
+
+        return [...NAV_DATA, { label: ADMIN_NAV.label, items: adminItems }];
+    }, [canAny]);
+
     // Compute which group should be open based on the current route
     const activeGroupKey = useMemo(
-        () => findActiveGroupKey(pathname),
-        [pathname],
+        () => findActiveGroupKey(pathname, navSections),
+        [pathname, navSections],
     );
 
     const [expandedKeys, setExpandedKeys] = useState<Set<Key>>(
@@ -90,7 +115,7 @@ export default function Sidebar({
                     expandedKeys={expandedKeys}
                     onExpandedChange={setExpandedKeys}
                 >
-                    {NAV_DATA.map((section) => (
+                    {navSections.map((section) => (
                         <div key={section.label}>
                             {/* Expanded: show section label | Collapsed: show divider between sections */}
                             {isSidebarOpen ? (
@@ -117,7 +142,7 @@ export default function Sidebar({
                                         id={item.title}
                                         icon={item.icon}
                                         label={item.title}
-                                        href={item.url}
+                                        href={(item as { url?: string }).url}
                                         items={item.items}
                                         collapsed={!isSidebarOpen}
                                         onItemClick={onItemClick}
