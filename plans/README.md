@@ -7,7 +7,7 @@ testable software on its own. Build them in order.
 |---|---|---|---|
 | 1 | [2026-08-22-phase1-spine.md](2026-08-22-phase1-spine.md) | Laravel API with auth, the working calendar, the task lifecycle and the workflow engine. An end-to-end test proves a completed task creates its successor in the right queue | **done** |
 | 2 | [2026-08-25-phase2-payment-flow.md](2026-08-25-phase2-payment-flow.md) | The payment → journal → accounting workflow, plus Queue, My Tasks and Task Detail in Next.js. The first thing anyone can watch working | **done** |
-| 3 | Samples and formula | Sample request, manager approval, workshop, parallel tinting branch, formula registration, printed client approval form, sample chain UI | not written |
+| 3 | [2026-08-26-phase3-samples-and-formula.md](2026-08-26-phase3-samples-and-formula.md) | Sample request, manager approval, workshop, parallel tinting branch, formula registration, printed client approval form, sample chain UI | **draft** |
 | 4 | [2026-08-26-phase4-site-visit-and-readiness.md](2026-08-26-phase4-site-visit-and-readiness.md) | The measurement sheet, the condition statement, readiness blocking, corrective actions, re-inspection, offline drafts | **draft** |
 | 5 | Live layer | Activity stream, SSE, notifications, control room, project detail, dashboards | not written |
 | 6 | Admin | Calendar and holidays, roles and permissions, workflow templates, checklist items, the three failure lists | not written |
