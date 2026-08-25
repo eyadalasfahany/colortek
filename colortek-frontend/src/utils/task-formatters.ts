@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow } from "date-fns";
+import { differenceInCalendarDays, differenceInHours, format, isToday, isTomorrow } from "date-fns";
 import type { TaskPriority, TaskStatus } from "@/types/api";
 
 type BadgeColor =
@@ -15,6 +15,41 @@ type BadgeColor =
   | "pink"
   | "rose"
   | "orange";
+
+export function formatDeadlineInWords(dueAt: string | null, isOverdue = false): string {
+  if (!dueAt) {
+    return "No deadline";
+  }
+
+  const date = new Date(dueAt);
+  const now = new Date();
+  const hours = differenceInHours(date, now);
+  const days = differenceInCalendarDays(date, now);
+
+  if (isOverdue || hours < 0) {
+    const lateHours = Math.abs(hours);
+    if (lateHours < 24) {
+      return `${Math.max(1, lateHours)} hour${lateHours === 1 ? "" : "s"} late`;
+    }
+
+    const lateDays = Math.abs(days);
+    return `${Math.max(1, lateDays)} day${lateDays === 1 ? "" : "s"} late`;
+  }
+
+  if (hours <= 24) {
+    return `Due in ${Math.max(1, hours)} hour${hours === 1 ? "" : "s"}`;
+  }
+
+  if (days === 1) {
+    return "Due tomorrow";
+  }
+
+  if (days <= 7) {
+    return `Due in ${days} days`;
+  }
+
+  return formatTaskDueAt(dueAt);
+}
 
 export function formatTaskDueAt(dueAt: string | null): string {
   if (!dueAt) {

@@ -1,30 +1,48 @@
 'use client';
 
 import { SearchIcon } from '@/components/common/header/icons';
-import { NAV_DATA } from '@/components/common/sidebar/data';
 import {
     InputGroup,
     InputGroupAddon,
     InputGroupInput,
 } from '@/components/tailgrids/core/input-group';
+import { globalSearch } from '@/services/searchService';
+import type { SearchResultItem } from '@/types/notifications';
 import { Command } from 'cmdk';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-interface SearchItem {
-    id: string;
-    title: string;
-    parentTitle?: string;
-    section: string;
-    url: string;
-    icon?: React.ReactNode;
+const GROUP_LABELS: Record<string, string> = {
+  projects: 'Projects',
+  tasks: 'Tasks',
+  clients: 'Clients',
+  samples: 'Samples',
+  site_visits: 'Site visits',
+  formulas: 'Formulas',
+};
+
+function resultHref(item: SearchResultItem): string {
+  switch (item.type) {
+    case 'project':
+      return `/projects/${item.reference ?? item.id}`;
+    case 'task':
+      return `/tasks/${item.id}`;
+    case 'client':
+      return `/projects?q=${encodeURIComponent(item.label)}`;
+    case 'sample':
+      return `/samples/${item.reference ?? item.id}`;
+    default:
+      return '/projects';
+  }
 }
 
 export default function SearchBar() {
     const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<Record<string, SearchResultItem[]>>({});
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    // Keyboard shortcut listener (Cmd+K / Ctrl+K)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -37,58 +55,37 @@ export default function SearchBar() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    // Parse NAV_DATA into searchable items grouped by section
-    const { itemsBySection } = useMemo(() => {
-        const sectionsMap: Record<string, SearchItem[]> = {};
+    useEffect(() => {
+        if (!query.trim()) {
+            setResults({});
+            return;
+        }
 
-        NAV_DATA.forEach((section) => {
-            const sectionLabel = section.label || 'PAGES';
+        const timer = window.setTimeout(async () => {
+            setLoading(true);
+            try {
+                const data = await globalSearch(query.trim());
+                setResults(data as unknown as Record<string, SearchResultItem[]>);
+            } catch {
+                setResults({});
+            } finally {
+                setLoading(false);
+            }
+        }, 250);
 
-            section.items.forEach((item) => {
-                if (item.url) {
-                    if (!sectionsMap[sectionLabel]) {
-                        sectionsMap[sectionLabel] = [];
-                    }
-                    sectionsMap[sectionLabel].push({
-                        id: item.url,
-                        title: item.title,
-                        section: sectionLabel,
-                        url: item.url,
-                        icon: item.icon,
-                    });
-                }
+        return () => window.clearTimeout(timer);
+    }, [query]);
 
-                if (item.items && item.items.length > 0) {
-                    item.items.forEach((subItem) => {
-                        if (subItem.url) {
-                            if (!sectionsMap[sectionLabel]) {
-                                sectionsMap[sectionLabel] = [];
-                            }
-                            sectionsMap[sectionLabel].push({
-                                id: subItem.url,
-                                title: subItem.title,
-                                parentTitle: item.title,
-                                section: sectionLabel,
-                                url: subItem.url,
-                                icon: item.icon,
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        return { itemsBySection: sectionsMap };
-    }, []);
-
-    const handleSelect = (url: string) => {
+    const handleSelect = (href: string) => {
         setOpen(false);
-        router.push(url);
+        setQuery('');
+        router.push(href);
     };
+
+    const hasResults = Object.values(results).some((items) => items.length > 0);
 
     return (
         <>
-            {/* Mobile trigger button (< xl) */}
             <button
                 onClick={() => setOpen(true)}
                 className='flex size-10 items-center justify-center rounded-lg border border-card-border bg-card-background text-icon-primary shadow-xs transition-colors outline-none hover:bg-background-gray-primary focus-visible:border-input-primary-focus-border focus-visible:ring-4 focus-visible:ring-input-primary-focus-border/20 xl:hidden'
@@ -97,7 +94,6 @@ export default function SearchBar() {
                 <SearchIcon />
             </button>
 
-            {/* Desktop trigger button (xl+) */}
             <div className='hidden xl:block'>
                 <button
                     onClick={() => setOpen(true)}
@@ -105,14 +101,11 @@ export default function SearchBar() {
                     type='button'
                 >
                     <InputGroup className='h-10 cursor-pointer'>
-                        <InputGroupAddon
-                            align='inline-start'
-                            className='pr-0 text-icon-tertiary'
-                        >
+                        <InputGroupAddon align='inline-start' className='pr-0 text-icon-tertiary'>
                             <SearchIcon />
                         </InputGroupAddon>
                         <InputGroupInput
-                            placeholder='Search pages...'
+                            placeholder='Search projects, tasks, clients…'
                             className='pointer-events-none cursor-pointer pl-2 text-sm select-none'
                             readOnly
                         />
@@ -125,7 +118,6 @@ export default function SearchBar() {
                 </button>
             </div>
 
-            {/* Command Palette Modal */}
             <Command.Dialog
                 open={open}
                 onOpenChange={setOpen}
@@ -133,17 +125,15 @@ export default function SearchBar() {
                 overlayClassName='fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity duration-200'
                 contentClassName='fixed top-1/2 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-card-border bg-card-background text-text-primary shadow-2xl overflow-hidden outline-none max-sm:max-w-[calc(100%-2rem)]'
             >
-                {/* Search Header Input */}
                 <div className='border-b border-card-border p-3.5'>
                     <InputGroup className='h-10'>
-                        <InputGroupAddon
-                            align='inline-start'
-                            className='pr-0 text-icon-tertiary'
-                        >
+                        <InputGroupAddon align='inline-start' className='pr-0 text-icon-tertiary'>
                             <SearchIcon />
                         </InputGroupAddon>
                         <Command.Input
-                            placeholder='Search pages...'
+                            value={query}
+                            onValueChange={setQuery}
+                            placeholder='Search SO9577, colour name, client…'
                             className='w-full min-w-0 flex-1 border-none bg-transparent pl-2 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:ring-0 focus:outline-none'
                         />
                         <InputGroupAddon align='inline-end'>
@@ -154,86 +144,51 @@ export default function SearchBar() {
                     </InputGroup>
                 </div>
 
-                {/* Results List */}
                 <Command.List className='scrollbar-thin max-h-96 overflow-y-auto p-2'>
-                    <Command.Empty className='py-8 text-center text-sm text-text-tertiary'>
-                        No pages found matching your search.
-                    </Command.Empty>
+                    {!query.trim() ? (
+                        <div className='py-8 text-center text-sm text-text-tertiary'>
+                            Type a project reference, client name, or task code.
+                        </div>
+                    ) : null}
+                    {loading ? (
+                        <div className='py-8 text-center text-sm text-text-tertiary'>Searching…</div>
+                    ) : null}
+                    {!loading && query.trim() && !hasResults ? (
+                        <Command.Empty className='py-8 text-center text-sm text-text-tertiary'>
+                            No results found.
+                        </Command.Empty>
+                    ) : null}
 
-                    {Object.entries(itemsBySection).map(
-                        ([sectionLabel, sectionItems]) => {
-                            if (sectionItems.length === 0) return null;
-                            return (
-                                <Command.Group
-                                    key={sectionLabel}
-                                    heading={sectionLabel}
-                                    className='py-1.5 **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-text-tertiary **:[[cmdk-group-heading]]:uppercase'
-                                >
-                                    {sectionItems.map((item) => (
+                    {Object.entries(results).map(([groupKey, items]) => {
+                        if (!items.length) return null;
+                        return (
+                            <Command.Group
+                                key={groupKey}
+                                heading={GROUP_LABELS[groupKey] ?? groupKey}
+                                className='py-1.5 **:[[cmdk-group-heading]]:px-3 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:text-[11px] **:[[cmdk-group-heading]]:font-semibold **:[[cmdk-group-heading]]:tracking-wider **:[[cmdk-group-heading]]:text-text-tertiary **:[[cmdk-group-heading]]:uppercase'
+                            >
+                                {items.map((item) => {
+                                    const href = resultHref(item);
+                                    return (
                                         <Command.Item
-                                            key={item.id}
-                                            value={`${item.section} ${item.parentTitle || ''} ${item.title} ${item.url}`}
-                                            onSelect={() =>
-                                                handleSelect(item.url)
-                                            }
-                                            className='flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm text-text-secondary transition-colors hover:bg-background-gray-primary data-[selected=true]:bg-background-gray-primary data-[selected=true]:text-text-primary'
+                                            key={`${item.type}-${item.id}`}
+                                            value={`${item.type} ${item.label}`}
+                                            onSelect={() => handleSelect(href)}
+                                            className='flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-background-gray-primary data-[selected=true]:bg-background-gray-primary'
                                         >
-                                            <div className='flex min-w-0 items-center gap-3'>
-                                                {item.icon && (
-                                                    <span className='flex size-5 shrink-0 items-center justify-center text-icon-secondary'>
-                                                        {item.icon}
-                                                    </span>
-                                                )}
-                                                <div className='flex items-center gap-1.5 truncate'>
-                                                    {item.parentTitle && (
-                                                        <span className='truncate font-normal text-text-tertiary'>
-                                                            {item.parentTitle} /
-                                                        </span>
-                                                    )}
-                                                    <span className='truncate text-text-primary'>
-                                                        {item.title}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className='flex shrink-0 items-center gap-2'>
-                                                <span className='hidden text-xs text-text-tertiary sm:inline'>
-                                                    {item.url}
+                                            <span className='truncate text-text-primary'>{item.label}</span>
+                                            {item.project_reference ? (
+                                                <span className='ml-2 shrink-0 text-xs text-text-tertiary'>
+                                                    {item.project_reference}
                                                 </span>
-                                            </div>
+                                            ) : null}
                                         </Command.Item>
-                                    ))}
-                                </Command.Group>
-                            );
-                        },
-                    )}
+                                    );
+                                })}
+                            </Command.Group>
+                        );
+                    })}
                 </Command.List>
-
-                {/* Modal Footer with navigation shortcuts */}
-                <div className='flex items-center justify-between border-t border-card-border bg-background-gray-primary/40 px-4 py-2.5 text-xs text-text-tertiary'>
-                    <div className='flex items-center gap-4'>
-                        <span className='flex items-center gap-1'>
-                            <kbd className='rounded border border-card-border bg-card-background px-1 py-0.5 font-mono text-[10px] shadow-xs'>
-                                ↑
-                            </kbd>
-                            <kbd className='rounded border border-card-border bg-card-background px-1 py-0.5 font-mono text-[10px] shadow-xs'>
-                                ↓
-                            </kbd>
-                            <span>Navigate</span>
-                        </span>
-                        <span className='flex items-center gap-1'>
-                            <kbd className='rounded border border-card-border bg-card-background px-1.5 py-0.5 font-mono text-[10px] shadow-xs'>
-                                ↵
-                            </kbd>
-                            <span>Select</span>
-                        </span>
-                    </div>
-                    <div className='flex items-center gap-1'>
-                        <kbd className='rounded border border-card-border bg-card-background px-1.5 py-0.5 font-mono text-[10px] shadow-xs'>
-                            ESC
-                        </kbd>
-                        <span>Close</span>
-                    </div>
-                </div>
             </Command.Dialog>
         </>
     );

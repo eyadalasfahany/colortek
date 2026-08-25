@@ -2,6 +2,8 @@
 
 import { ApiError } from "@/config/axios";
 import { useAuth } from "@/context/auth-context";
+import { useLocale } from "@/context/locale-context";
+import { LOCALE_LABELS, type AppLocale } from "@/lib/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/tailgrids/core/alert";
 import { Button } from "@/components/tailgrids/core/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/tailgrids/core/card";
@@ -49,6 +51,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated } = useAuth();
+  const { locale, setLocale } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -80,7 +83,7 @@ function LoginForm() {
           setFieldErrors(error.errors);
         }
       } else {
-        setErrorMessage("Unable to sign in. Please try again.");
+        setErrorMessage("Wrong email or password.");
       }
     } finally {
       setIsSubmitting(false);
@@ -88,15 +91,29 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center bg-background-gray-secondary_alt_2 p-4">
+    <div className="flex min-h-full items-center justify-center bg-background-gray-secondary_alt_2 p-4" dir={locale === "ar" ? "rtl" : "ltr"}>
       <Card className="w-full max-w-md">
         <CardHeader className="mb-6 flex-col items-start gap-4">
           <LogoWithText />
-          <div>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription className="mt-1">
-              Enter your email and password to access your tasks.
-            </CardDescription>
+          <div className="flex w-full items-start justify-between gap-4">
+            <div>
+              <CardTitle>Sign in</CardTitle>
+              <CardDescription className="mt-1">
+                Enter your email and password to access your tasks.
+              </CardDescription>
+            </div>
+            <select
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as AppLocale)}
+              className="rounded-lg border border-card-border bg-card-bg px-2 py-1.5 text-sm"
+              aria-label="Language"
+            >
+              {(Object.keys(LOCALE_LABELS) as AppLocale[]).map((code) => (
+                <option key={code} value={code}>
+                  {LOCALE_LABELS[code]}
+                </option>
+              ))}
+            </select>
           </div>
         </CardHeader>
 

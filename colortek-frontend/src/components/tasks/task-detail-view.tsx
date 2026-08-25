@@ -14,6 +14,8 @@ import { EmployeePickerField } from "@/components/tasks/employee-picker-field";
 import { FormulaRegistrationPanel } from "@/components/tasks/formula-registration-panel";
 import { PaymentSubjectPanel } from "@/components/tasks/payment-subject-panel";
 import { SampleSubjectPanel } from "@/components/tasks/sample-subject-panel";
+import { TaskActionsBar } from "@/components/tasks/task-actions-bar";
+import { TaskActivitySection } from "@/components/tasks/task-activity-section";
 import { queryKeys } from "@/lib/queryKeys";
 import { uploadAttachment, type UploadedAttachment } from "@/services/attachmentService";
 import {
@@ -28,9 +30,9 @@ import { isSampleSubjectContext } from "@/types/samples";
 import { getDecidedAtFieldLabel, resolveTaskCode } from "@/utils/task-codes";
 import {
   formatAttachmentType,
+  formatDeadlineInWords,
   formatHandoverDueAt,
   formatStatusLabel,
-  formatTaskDueAt,
   priorityLabel,
   statusBadgeColor,
 } from "@/utils/task-formatters";
@@ -54,6 +56,10 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [handoverMessage, setHandoverMessage] = useState<string | null>(null);
+  const [comments, setComments] = useState<
+    Array<{ id: string; body: string; created_at: string; author?: string }>
+  >([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const taskQuery = useQuery({
     queryKey: queryKeys.tasks.detail(taskId),
@@ -103,10 +109,24 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
     claimMutation.isPending || startMutation.isPending || completeMutation.isPending;
 
   const missingRequiredAttachments = useMemo(() => {
-    if (!task?.required_attachment_types?.length) return false;
-    return task.required_attachment_types.some((type) => (uploadedAttachments[type] ?? []).length === 0);
+    if (!task?.required_attachment_types?.length) return [];
+    return task.required_attachment_types.filter(
+      (type) => (uploadedAttachments[type] ?? []).length === 0,
+    );
   }, [task, uploadedAttachments]);
-  const canComplete = task?.status === "in_progress" && (!taskCode || taskCode !== "sales_get_client_decision" || !missingRequiredAttachments);
+
+  const missingRequiredFields = useMemo(() => {
+    if (!task?.form_schema?.fields) return [];
+    return task.form_schema.fields.filter(
+      (field) => field.required && !(formValues[field.name] ?? "").trim(),
+    );
+  }, [formValues, task]);
+
+  const canComplete =
+    task?.status === "in_progress" &&
+    missingRequiredAttachments.length === 0 &&
+    missingRequiredFields.length === 0 &&
+    (!taskCode || taskCode !== "sales_get_client_decision" || missingRequiredAttachments.length === 0);
 
   const primaryAction = useMemo(() => {
     if (!task) {
@@ -122,16 +142,35 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         return {
           label: "Complete",
           action: () => {
+            setFieldErrors({});
+            if (missingRequiredFields.length > 0) {
+              const errors: Record<string, string> = {};
+              for (const field of missingRequiredFields) {
+                errors[field.name] = `${field.label} is required`;
+              }
+              setFieldErrors(errors);
+              setActionError(`Fill in required fields: ${missingRequiredFields.map((f) => f.label).join(", ")}`);
+              return;
+            }
+            if (missingRequiredAttachments.length > 0) {
+              setActionError(
+                `Upload required files: ${missingRequiredAttachments.map(formatAttachmentType).join(", ")}`,
+              );
+              return;
+            }
             const fields = buildFieldsPayload(task.form_schema?.fields ?? [], formValues);
-            const attachmentIds = buildAttachmentIds(task.required_attachment_types ?? [], uploadedAttachments);
+            const attachmentIds = buildAttachmentIds(
+              task.required_attachment_types ?? [],
+              uploadedAttachments,
+            );
             completeMutation.mutate({ id: task.id, fields, attachmentIds });
           },
-          disabled: !canComplete,
+          disabled: false,
         };
       default:
         return null;
     }
-  }, [canComplete, claimMutation, completeMutation, formValues, startMutation, task, uploadedAttachments]);
+  }, [claimMutation, completeMutation, formValues, missingRequiredAttachments, missingRequiredFields, startMutation, task, uploadedAttachments]);
 
   if (taskQuery.isLoading) {
     return <TaskDetailSkeleton />;
@@ -172,7 +211,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   }
 
   return (
-    <div className="px-4 pt-6 lg:px-6">
+    <div className="px-4 pt-6 lg:px-6" dir="auto">
       <div className="mb-4">
         <Link href="/my-tasks" className="text-sm text-text-secondary hover:text-text-primary">
           ← Back to My Tasks
@@ -193,6 +232,15 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             </Button>
           </div>
         </Alert>
+      ) : null}
+
+      {task.status === "in_progress" && task.started_at ? (
+        <Card className="mb-4 border-brand-200 bg-brand-50">
+          <p className="text-sm font-medium text-text-secondary">Timer running</p>
+          <p className="text-3xl font-bold text-brand-600">
+            {formatElapsedSince(task.started_at)}
+          </p>
+        </Card>
       ) : null}
 
       <Card className="mb-4">
@@ -227,7 +275,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
                 task.is_overdue ? "font-medium text-error-500" : "text-text-secondary",
               )}
             >
-              {formatTaskDueAt(task.due_at)}
+              {formatDeadlineInWords(task.due_at, task.is_overdue)}
               {task.is_overdue ? " · Overdue" : ""}
             </span>
           </div>
@@ -295,6 +343,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
                 field={field}
                 taskCode={taskCode}
                 value={formValues[field.name] ?? ""}
+                error={fieldErrors[field.name]}
                 onChange={(value) =>
                   setFormValues((current) => ({ ...current, [field.name]: value }))
                 }
@@ -367,15 +416,35 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         </Alert>
       ) : null}
 
+      {!handoverMessage ? (
+        <TaskActionsBar
+          task={task}
+          isActionPending={isActionPending}
+          onSuccess={() => void invalidateTaskQueries()}
+          onError={setActionError}
+          onCommentAdded={(comment) => setComments((current) => [comment, ...current])}
+        />
+      ) : null}
+
       {!handoverMessage && primaryAction ? (
         <div className="flex flex-col gap-2">
-          {primaryAction.disabled ? <p className="text-sm text-text-secondary">Upload all required files before completing this task.</p> : null}
+          {(missingRequiredAttachments.length > 0 || missingRequiredFields.length > 0) &&
+          task.status === "in_progress" ? (
+            <p className="text-sm text-text-secondary">
+              {missingRequiredFields.length > 0
+                ? `Required fields: ${missingRequiredFields.map((f) => f.label).join(", ")}`
+                : null}
+              {missingRequiredAttachments.length > 0
+                ? `Required files: ${missingRequiredAttachments.map(formatAttachmentType).join(", ")}`
+                : null}
+            </p>
+          ) : null}
           <div className="flex gap-3">
           <Button
             variant="primary"
             appearance="fill"
             size="lg"
-            isDisabled={isActionPending || primaryAction.disabled}
+            isDisabled={isActionPending}
             onPress={primaryAction.action}
           >
             {isActionPending ? "Working…" : primaryAction.label}
@@ -383,6 +452,8 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
           </div>
         </div>
       ) : null}
+
+      <TaskActivitySection task={task} comments={comments} />
 
       {!handoverMessage && !primaryAction && task.status === "completed" ? (
         <Alert status="success">
@@ -398,11 +469,13 @@ function DynamicField({
   field,
   taskCode,
   value,
+  error,
   onChange,
 }: {
   field: FormSchemaField;
   taskCode: string | null;
   value: string;
+  error?: string;
   onChange: (value: string) => void;
 }) {
   const labelText = getDecidedAtFieldLabel(field);
@@ -457,8 +530,18 @@ function DynamicField({
         onChange={(event) => onChange(event.target.value)}
         className="w-full px-3 py-2.5 text-sm"
       />
+      {error ? <p className="text-xs text-error-500">{error}</p> : null}
     </div>
   );
+}
+
+function formatElapsedSince(startedAt: string): string {
+  const start = new Date(startedAt).getTime();
+  const elapsedMs = Date.now() - start;
+  const totalMinutes = Math.max(0, Math.floor(elapsedMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
 }
 
 function TaskDetailSkeleton() {

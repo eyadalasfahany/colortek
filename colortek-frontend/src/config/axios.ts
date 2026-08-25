@@ -1,4 +1,5 @@
 import { clearToken, getToken } from "@/lib/auth-token";
+import { getStoredLocale } from "@/lib/locale";
 
 export class ApiError extends Error {
   status: number;
@@ -35,6 +36,7 @@ requestInterceptors.push((headers) => {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+  headers["Accept-Language"] = getStoredLocale();
   return headers;
 });
 

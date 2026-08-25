@@ -7,13 +7,14 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/tailg
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import type { TaskListItem } from "@/types/api";
 import {
+  formatDeadlineInWords,
   formatStatusLabel,
-  formatTaskDueAt,
   priorityLabel,
   statusBadgeColor,
 } from "@/utils/task-formatters";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
+import { groupMyTasks } from "@/utils/group-my-tasks";
 
 interface TaskListProps {
   tasks: TaskListItem[];
@@ -21,6 +22,41 @@ interface TaskListProps {
   showClaimButton?: boolean;
   claimingTaskId?: number | null;
   onClaim?: (taskId: number) => void;
+}
+
+export function GroupedTaskList({
+  tasks,
+  emptyMessage,
+}: {
+  tasks: TaskListItem[];
+  emptyMessage: string;
+}) {
+  if (tasks.length === 0) {
+    return (
+      <Card>
+        <CardDescription className="text-center text-text-secondary">{emptyMessage}</CardDescription>
+      </Card>
+    );
+  }
+
+  const groups = groupMyTasks(tasks);
+
+  return (
+    <div className="space-y-6">
+      {groups.map((group) => (
+        <section key={group.key}>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-tertiary">
+            {group.label}
+          </h2>
+          <div className="flex flex-col gap-3">
+            {group.tasks.map((task) => (
+              <TaskListItemCard key={task.id} task={task} showClaimButton={false} isClaiming={false} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
 }
 
 export function TaskList({
@@ -96,7 +132,7 @@ function TaskListItemCard({
               task.is_overdue ? "font-medium text-error-500" : "text-text-tertiary",
             )}
           >
-            {formatTaskDueAt(task.due_at)}
+            {formatDeadlineInWords(task.due_at, task.is_overdue)}
           </span>
           {canClaim ? (
             <Button
