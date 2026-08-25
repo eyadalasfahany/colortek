@@ -236,6 +236,7 @@ final class ReferenceSeeder extends Seeder
         }
 
         $this->call(PaymentWorkflowSeeder::class);
+        $this->call(SiteChecklistSeeder::class);
     }
 
     private function seedBlockerCategories(): void

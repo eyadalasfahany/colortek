@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\HolidayType;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -29,6 +30,7 @@ final class EnumController extends Controller
             'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
             'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
             'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
+            'holiday_type' => $this->holidayTypes(),
             default => null,
         };
 
@@ -75,6 +77,15 @@ final class EnumController extends Controller
                 'label' => $category->getTranslation('name', app()->getLocale()),
             ])
             ->all();
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    private function holidayTypes(): array
+    {
+        return [
+            ['value' => HolidayType::Public->value, 'label' => 'Public holiday'],
+            ['value' => HolidayType::Company->value, 'label' => 'Company holiday'],
+        ];
     }
 
     /**

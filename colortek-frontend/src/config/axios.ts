@@ -177,4 +177,7 @@ export const axiosInstance = {
   postBlob(path: string, body?: unknown): Promise<Blob> {
     return request<Blob>(path, { method: "POST", body });
   },
+  delete<T>(path: string, config?: { params?: QueryParams }): Promise<T> {
+    return request<T>(path, { method: "DELETE", params: config?.params });
+  },
 };

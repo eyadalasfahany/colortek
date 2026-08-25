@@ -1,3 +1,26 @@
-<?php declare(strict_types=1); namespace App\Http\Controllers\Api\V1\Admin;
-use App\Http\Controllers\Api\V1\Admin\Concerns\AuthorizesAdminAccess; use App\Http\Controllers\Controller; use App\Http\Requests\Admin\CalendarImpactRequest; use App\Services\Admin\CalendarImpactService; use Illuminate\Http\JsonResponse;
-final class AdminCalendarController extends Controller { use AuthorizesAdminAccess; public function __construct(private CalendarImpactService $service){} public function impact(CalendarImpactRequest $request): JsonResponse { $this->authorizeAdminAny('settings.manage','holiday.manage'); $v=$request->validated(); return response()->json(['data'=>['affected_task_count'=>$this->service->countAffectedTasks($v['settings']??[],$v['holiday']??null,$v['delete_holiday_id']??null)]]); }}
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Api\V1\Admin;
+
+use App\Http\Controllers\Api\V1\Admin\Concerns\AuthorizesAdminAccess;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CalendarImpactRequest;
+use App\Services\Admin\CalendarImpactService;
+use Illuminate\Http\JsonResponse;
+
+final class AdminCalendarController extends Controller
+{
+    use AuthorizesAdminAccess;
+
+    public function __construct(private CalendarImpactService $service) {}
+
+    public function impact(CalendarImpactRequest $request): JsonResponse
+    {
+        $this->authorizeAdminAny('settings.manage', 'holiday.manage');
+        $v = $request->validated();
+
+        return response()->json(['data' => ['affected_task_count' => $this->service->countAffectedTasks($v['settings'] ?? [], $v['holiday'] ?? null, $v['delete_holiday_id'] ?? null)]]);
+    }
+}

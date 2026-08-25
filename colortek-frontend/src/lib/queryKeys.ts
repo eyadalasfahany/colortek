@@ -13,4 +13,15 @@ export const queryKeys = {
   },
   formulas: { list: (sampleReference: string) => ["formulas", "list", sampleReference] as const },
   employees: { list: () => ["employees", "list"] as const },
+  admin: {
+    settings: () => ["admin", "settings"] as const,
+    holidays: () => ["admin", "holidays"] as const,
+    roles: () => ["admin", "roles"] as const,
+    users: () => ["admin", "users"] as const,
+    employees: () => ["admin", "employees"] as const,
+    workflows: () => ["admin", "workflows"] as const,
+    checklist: () => ["admin", "checklist"] as const,
+    failures: (tab: string) => ["admin", "failures", tab] as const,
+    coverage: () => ["admin", "coverage"] as const,
+  },
 } as const;

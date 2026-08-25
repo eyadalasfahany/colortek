@@ -75,6 +75,7 @@ final class Task extends Model
         'blocked_by_user_id',
         'blocked_at',
         'cancelled_reason',
+        'due_at_overridden',
     ];
 
     protected function casts(): array
@@ -85,6 +86,7 @@ final class Task extends Model
             'claimed_at' => 'immutable_datetime',
             'due_at' => 'immutable_datetime',
             'is_overdue' => 'boolean',
+            'due_at_overridden' => 'boolean',
             'escalated_at' => 'immutable_datetime',
             'ready_at' => 'immutable_datetime',
             'started_at' => 'immutable_datetime',

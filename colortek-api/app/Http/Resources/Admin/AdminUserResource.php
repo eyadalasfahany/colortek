@@ -1,1 +1,40 @@
-<?php declare(strict_types=1); namespace App\Http\Resources\Admin; use Illuminate\Http\Resources\Json\JsonResource; /** @mixin \App\Models\User */ final class AdminUserResource extends JsonResource { public function toArray($r): array { return ['id'=>$this->id,'name'=>$this->name,'email'=>$this->email,'phone'=>$this->phone,'locale'=>$this->locale,'active'=>$this->active,'last_seen_at'=>$this->last_seen_at?->toIso8601String(),'roles'=>$this->whenLoaded('roles',fn()=>$this->roles->pluck('name')),'departments'=>$this->whenLoaded('departments',fn()=>$this->departments->map(fn($d)=>['id'=>$d->id,'code'=>$d->code,'name'=>$d->name_en,'is_supervisor'=>(bool)$d->pivot->is_supervisor])),'primary_department_id'=>$this->primary_department_id,'is_super_admin'=>$this->isSuperAdmin()]; }}
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Resources\Admin;
+
+use App\Models\User;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/** @mixin User */
+final class AdminUserResource extends JsonResource
+{
+    /** @return array<string, mixed> */
+    public function toArray($request): array
+    {
+        /** @var User $user */
+        $user = $this->resource;
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'locale' => $user->locale,
+            'active' => $user->active,
+            'last_seen_at' => $user->last_seen_at,
+            'roles' => $this->whenLoaded('roles', fn () => $user->roles->pluck('name')),
+            'departments' => $this->whenLoaded('departments', fn () => $user->departments->map(
+                fn ($department) => [
+                    'id' => $department->id,
+                    'code' => $department->code,
+                    'name' => $department->getTranslation('name', 'en'),
+                    'is_supervisor' => (bool) optional($department->getRelationValue('pivot'))->is_supervisor,
+                ],
+            )),
+            'primary_department_id' => $user->primary_department_id,
+            'is_super_admin' => $user->isSuperAdmin(),
+        ];
+    }
+}

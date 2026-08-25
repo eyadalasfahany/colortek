@@ -1,1 +1,27 @@
-<?php declare(strict_types=1); namespace App\Services\Admin; use App\Enums\TaskStatus; use App\Models\WorkflowInstance; use App\Support\PermissionCatalog; use Illuminate\Database\Eloquent\Builder; use Illuminate\Pagination\LengthAwarePaginator; final class StalledInstanceService { private const OPEN=[TaskStatus::Ready,TaskStatus::Claimed,TaskStatus::InProgress,TaskStatus::Blocked,TaskStatus::Waiting,TaskStatus::Pending]; public function paginate(int $per=15): LengthAwarePaginator { return WorkflowInstance::with(['template','project','tasks'])->where('status','running')->whereDoesntHave('tasks',fn(Builder $q)=>$q->whereIn('status',array_map(fn($s)=>$s->value,self::OPEN)))->orderByDesc('started_at')->paginate($per);} public function coverageWarnings(): array { return collect(PermissionCatalog::COVERAGE_CHECKS)->filter(fn($p)=>\App\Models\User::permission($p)->where('active',true)->count()===0)->map(fn($p)=>['permission'=>$p,'description'=>PermissionCatalog::description($p)])->values()->all(); }}
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Admin;
+
+use App\Enums\TaskStatus;
+use App\Models\User;
+use App\Models\WorkflowInstance;
+use App\Support\PermissionCatalog;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+
+final class StalledInstanceService
+{
+    private const OPEN = [TaskStatus::Ready, TaskStatus::Claimed, TaskStatus::InProgress, TaskStatus::Blocked, TaskStatus::Waiting, TaskStatus::Pending];
+
+    public function paginate(int $per = 15): LengthAwarePaginator
+    {
+        return WorkflowInstance::with(['template', 'project', 'tasks'])->where('status', 'running')->whereDoesntHave('tasks', fn (Builder $q) => $q->whereIn('status', array_map(fn ($s) => $s->value, self::OPEN)))->orderByDesc('started_at')->paginate($per);
+    }
+
+    public function coverageWarnings(): array
+    {
+        return collect(PermissionCatalog::COVERAGE_CHECKS)->filter(fn ($p) => User::permission($p)->where('active', true)->whereDoesntHave('roles', fn ($q) => $q->where('name', 'super_admin'))->count() === 0)->map(fn ($p) => ['permission' => $p, 'description' => PermissionCatalog::description($p)])->values()->all();
+    }
+}

@@ -1,1 +1,15 @@
-<?php declare(strict_types=1); namespace App\Policies; use App\Models\User; final class AdminDiagnosticsPolicy { public function viewAny(User $u): bool { return $u->can('settings.manage'); } }
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\User;
+
+final class AdminDiagnosticsPolicy
+{
+    public function viewAny(User $u): bool
+    {
+        return $u->can('settings.manage');
+    }
+}
