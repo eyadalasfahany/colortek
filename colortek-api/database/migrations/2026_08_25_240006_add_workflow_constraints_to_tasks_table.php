@@ -13,10 +13,10 @@ return new class extends Migration
         Schema::table('tasks', function (Blueprint $table): void {
             $driver = Schema::getConnection()->getDriverName();
             $expression = $driver === 'sqlite'
-                ? "CASE WHEN status IN ('completed','cancelled') THEN 'closed-' || id ELSE 'open' END"
-                : "CASE WHEN status IN ('completed','cancelled') THEN CONCAT('closed-', id) ELSE 'open' END";
+                ? "CASE WHEN status IN ('completed','cancelled') THEN 'closed-' || reference ELSE 'open' END"
+                : "CASE WHEN status IN ('completed','cancelled') THEN CONCAT('closed-', reference) ELSE 'open' END";
 
-            $table->string('open_marker', 20)->storedAs($expression);
+            $table->string('open_marker', 80)->storedAs($expression);
         });
 
         Schema::table('tasks', function (Blueprint $table): void {

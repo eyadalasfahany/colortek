@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Repositories;
 
 use App\Enums\TaskStatus;
+use App\Http\Filters\TaskFilter;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -33,10 +36,22 @@ final class TaskRepository extends BaseRepository
     }
 
     /** @param list<string> $relations */
-    public function findForUser(int $id, array $relations = []): Task
+    public function findForUser(int $id, User $user, array $relations = []): Task
     {
-        /** @var Task $task */
-        $task = $this->findOneOrFail($id, $relations);
+        $query = $this->baseQuery()->whereKey($id);
+
+        app(TaskFilter::class)->apply(request(), $query, $user);
+
+        /** @var Task|null $task */
+        $task = $query->first();
+
+        if ($task === null) {
+            throw (new ModelNotFoundException(__('Task not found')))->setModel(Task::class, [$id]);
+        }
+
+        if ($relations !== []) {
+            $task->load($relations);
+        }
 
         return $task;
     }
