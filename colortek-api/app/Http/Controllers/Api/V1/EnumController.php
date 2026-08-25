@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\FormulaStatus;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
+use App\Enums\SampleStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
@@ -29,6 +31,8 @@ final class EnumController extends Controller
             'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
             'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
             'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
+            'sample_status' => $this->labeledEnumCases(SampleStatus::cases()),
+            'formula_status' => $this->labeledEnumCases(FormulaStatus::cases()),
             default => null,
         };
 
@@ -78,7 +82,7 @@ final class EnumController extends Controller
     }
 
     /**
-     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus>  $cases
+     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus|SampleStatus|FormulaStatus>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

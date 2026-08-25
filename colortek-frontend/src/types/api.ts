@@ -103,7 +103,6 @@ export interface TaskDetail extends TaskListItem {
   form_schema?: FormSchema | null;
   required_attachment_types?: string[];
   previous_outputs?: PreviousOutput[];
-  subject?: PaymentSubjectContext | null;
   project?: {
     id: number;
     reference: string;

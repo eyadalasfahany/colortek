@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Repositories\TaskRepository;
 use App\Services\Audit\AuditLogger;
 use App\Services\Payments\PaymentTaskHandler;
+use App\Services\Samples\SampleTaskHandler;
 use App\Services\Workflow\WorkflowEngine;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -32,6 +33,7 @@ final class TaskService
         private WorkflowEngine $workflowEngine,
         private AuditLogger $auditLogger,
         private PaymentTaskHandler $paymentTaskHandler,
+        private SampleTaskHandler $sampleTaskHandler,
     ) {}
 
     public function claim(Task $task, User $user): Task
@@ -136,6 +138,7 @@ final class TaskService
         DB::transaction(function () use ($task, $user, $fields, $attachmentIds, &$createdTasks, &$completed): void {
             $this->validator->assertReadyToComplete($task, $fields, $attachmentIds);
             $this->paymentTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
+            $this->sampleTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
             $this->persistFieldValues($task, $fields);
 
             $completed = $this->transitionTo($task, TaskStatus::Completed, $user, afterUpdate: [
@@ -145,6 +148,7 @@ final class TaskService
 
             $createdTasks = $this->workflowEngine->advance($completed);
             $this->paymentTaskHandler->handleAfterComplete($completed, $user, $fields);
+            $this->sampleTaskHandler->handleAfterComplete($completed, $user, $fields);
         });
 
         DB::afterCommit(fn () => event(new TaskCompleted($completed->fresh(), $user, $createdTasks)));

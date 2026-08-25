@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Models\Department;
 use App\Models\Employee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,15 +13,25 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EmployeeFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Employee::class;
+
     public function definition(): array
     {
         return [
-            //
+            'code' => fake()->unique()->bothify('EMP-####'),
+            'name' => fake()->name(),
+            'department_id' => Department::query()->where('code', 'tinting')->value('id'),
+            'user_id' => null,
+            'active' => true,
         ];
+    }
+
+    public function inDepartment(string $code): static
+    {
+        return $this->state(function () use ($code): array {
+            $department = Department::query()->where('code', $code)->firstOrFail();
+
+            return ['department_id' => $department->id];
+        });
     }
 }

@@ -97,12 +97,13 @@ final class SampleController extends Controller
         ], 201);
     }
 
-    public function approvalForm(string $identifier): Response
+    public function approvalForm(Request $request, string $identifier): Response
     {
         $sample = $this->sampleService->findOrFail($identifier, ['client', 'project.quotation']);
         $this->authorize('recordClientDecision', $sample);
 
         $pdf = $this->approvalFormGenerator->generate($sample);
+        $this->sampleService->markApprovalFormGenerated($sample, $request->user());
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',

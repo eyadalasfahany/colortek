@@ -74,6 +74,12 @@ final class Project extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasMany<Sample, $this> */
+    public function samples(): HasMany
+    {
+        return $this->hasMany(Sample::class);
+    }
+
     /** @return MorphMany<WorkflowInstance, $this> */
     public function workflowInstances(): MorphMany
     {

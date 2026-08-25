@@ -65,7 +65,10 @@ final class SampleService
         return Sample::query()->where('project_id', $projectId)->orderByDesc('id')->with(['client', 'project'])->get()->all();
     }
 
-    /** @param array<string, mixed> $data @return array{sample: Sample, task: Task} */
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{sample: Sample, task: Task}
+     */
     public function start(array $data, User $user): array
     {
         if (empty($data['client_id'])) {
@@ -87,7 +90,7 @@ final class SampleService
                 'reference' => $this->referenceGenerator->forSample($project, $client),
                 'client_id' => $client->id,
                 'project_id' => $project?->id,
-                'root_sample_id' => 0,
+                'root_sample_id' => null,
                 'attempt_number' => 1,
                 'requested_by_user_id' => $user->id,
                 'requested_at' => now(),
@@ -125,6 +128,21 @@ final class SampleService
         $instance = $this->workflowEngine->start($template, $parent);
 
         return $instance->tasks()->whereHas('definition', fn ($q) => $q->where('code', 'sales_create_modification_request'))->firstOrFail();
+    }
+
+    /** @param array<string, mixed> $data */
+    public function requestModification(Sample $parent, array $data, User $user): Sample
+    {
+        return $this->createModificationChild($parent, $data, $user);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $attachmentIds
+     */
+    public function recordClientDecision(Sample $sample, array $data, User $user, array $attachmentIds): Sample
+    {
+        return app(SampleTaskHandler::class)->recordClientDecision($sample, $data, $user, $attachmentIds);
     }
 
     /** @param array<string, mixed> $data */

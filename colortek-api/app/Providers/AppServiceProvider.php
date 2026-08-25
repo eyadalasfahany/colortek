@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\Attachment;
+use App\Models\Formula;
 use App\Models\Journal;
 use App\Models\Payment;
+use App\Models\Sample;
 use App\Models\Task;
 use App\Policies\AttachmentPolicy;
+use App\Policies\FormulaPolicy;
 use App\Policies\JournalPolicy;
 use App\Policies\PaymentPolicy;
+use App\Policies\SamplePolicy;
 use App\Policies\TaskPolicy;
 use App\Services\Time\WorkingCalendar;
 use Illuminate\Support\Facades\Gate;
@@ -35,5 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Payment::class, PaymentPolicy::class);
         Gate::policy(Journal::class, JournalPolicy::class);
         Gate::policy(Attachment::class, AttachmentPolicy::class);
+        Gate::policy(Sample::class, SamplePolicy::class);
+        Gate::policy(Formula::class, FormulaPolicy::class);
     }
 }

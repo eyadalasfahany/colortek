@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Resources;
+
+use App\Models\SampleApproval;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/** @mixin SampleApproval */
+final class SampleApprovalResource extends JsonResource
+{
+    /** @return array<string, mixed> */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'type' => $this->type->value,
+            'decision' => $this->decision?->value,
+            'client_signatory_name' => $this->client_signatory_name,
+            'decided_at' => $this->decided_at?->toIso8601String(),
+            'comments' => $this->comments,
+            'form_generated_at' => $this->form_generated_at?->toIso8601String(),
+        ];
+    }
+}

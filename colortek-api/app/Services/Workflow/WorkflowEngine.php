@@ -7,6 +7,7 @@ namespace App\Services\Workflow;
 use App\Enums\TaskStatus;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Models\Sample;
 use App\Models\Task;
 use App\Models\WorkflowInstance;
 use App\Models\WorkflowTaskDefinition;
@@ -30,17 +31,7 @@ final class WorkflowEngine
             throw new RuntimeException('Cannot instantiate a draft workflow template.');
         }
 
-        $project = match (true) {
-            $subject instanceof Project => $subject,
-            $subject instanceof Payment => $subject->loadMissing('project')->project,
-            default => null,
-        };
-        if ($project === null && $subject->relationLoaded('project')) {
-            $relatedProject = $subject->getRelation('project');
-            if ($relatedProject instanceof Project) {
-                $project = $relatedProject;
-            }
-        }
+        $project = $this->resolveProject($subject);
 
         $instance = WorkflowInstance::create([
             'template_id' => $template->id,
@@ -55,6 +46,33 @@ final class WorkflowEngine
         foreach ($entryPoints as $definition) {
             $this->taskFactory->createForDefinition($instance, $definition, TaskStatus::Ready);
         }
+
+        return $instance->load('tasks');
+    }
+
+    public function startAtDefinition(WorkflowTemplate $template, Model $subject, string $definitionCode): WorkflowInstance
+    {
+        if ($template->published_at === null) {
+            throw new RuntimeException('Cannot instantiate a draft workflow template.');
+        }
+
+        $definition = $template->definitions()->where('code', $definitionCode)->first();
+        if ($definition === null) {
+            throw new RuntimeException(sprintf('Workflow definition [%s] not found.', $definitionCode));
+        }
+
+        $project = $this->resolveProject($subject);
+
+        $instance = WorkflowInstance::create([
+            'template_id' => $template->id,
+            'subject_type' => $subject->getMorphClass(),
+            'subject_id' => $subject->getKey(),
+            'project_id' => $project?->id,
+            'status' => 'running',
+            'started_at' => now(),
+        ]);
+
+        $this->taskFactory->createForDefinition($instance, $definition, TaskStatus::Ready);
 
         return $instance->load('tasks');
     }
@@ -224,6 +242,34 @@ final class WorkflowEngine
                 'completed_at' => now(),
             ]);
         }
+    }
+
+    private function resolveProject(Model $subject): ?Project
+    {
+        if ($subject instanceof Project) {
+            return $subject;
+        }
+
+        if ($subject instanceof Payment) {
+            $subject->loadMissing('project');
+
+            return $subject->project;
+        }
+
+        if ($subject instanceof Sample) {
+            $subject->loadMissing('project');
+
+            return $subject->project;
+        }
+
+        if ($subject->relationLoaded('project')) {
+            $relatedProject = $subject->getRelation('project');
+            if ($relatedProject instanceof Project) {
+                return $relatedProject;
+            }
+        }
+
+        return null;
     }
 
     private function logEvaluation(

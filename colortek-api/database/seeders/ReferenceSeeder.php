@@ -224,6 +224,7 @@ final class ReferenceSeeder extends Seeder
             'weekend_days' => ['friday'],
             'default_locale' => 'en',
             'humidity_max' => 85,
+            'sample.default_size' => 'A4',
             'sample_repeat_attempt_threshold' => 4,
             'block_all_when_site_not_ready' => false,
         ];
@@ -236,6 +237,8 @@ final class ReferenceSeeder extends Seeder
         }
 
         $this->call(PaymentWorkflowSeeder::class);
+        $this->call(SampleWorkflowSeeder::class);
+        $this->call(SampleModificationWorkflowSeeder::class);
     }
 
     private function seedBlockerCategories(): void
