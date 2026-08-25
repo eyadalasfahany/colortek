@@ -51,6 +51,27 @@ export interface FormSchemaField {
   options?: Array<{ value: string; label: string }>;
 }
 
+export interface PaymentSubjectContext {
+  type: "payment";
+  id: number;
+  installment_number: number;
+  amount: string;
+  currency: string;
+  method: string;
+  paid_at: string;
+  status: string;
+  notes?: string | null;
+  project?: { id: number; reference: string; name: string } | null;
+  client?: { id: number; name: string } | null;
+  salesperson?: { id: number; name: string } | null;
+  quotation?: { number: string; total_value: string; currency: string } | null;
+  attachments?: PreviousOutputAttachment[];
+}
+
+export function isPaymentSubjectContext(value: unknown): value is PaymentSubjectContext {
+  return isRecord(value) && value.type === "payment" && typeof value.id === "number";
+}
+
 export interface FormSchema {
   fields: FormSchemaField[];
 }

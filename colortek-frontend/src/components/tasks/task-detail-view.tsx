@@ -225,6 +225,8 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         </Card>
       ) : null}
 
+      {paymentSubject ? <PaymentSubjectPanel subject={paymentSubject} /> : null}
+
       {task.previous_outputs && task.previous_outputs.length > 0 ? (
         <Card className="mb-4">
           <CardTitle className="mb-4 text-lg">What the last person did</CardTitle>
@@ -387,6 +389,58 @@ function DynamicField({
     );
   }
 
+  if (field.type === "boolean") {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          id={field.name}
+          type="checkbox"
+          checked={value === "true"}
+          onChange={(event) => onChange(event.target.checked ? "true" : "false")}
+          className="size-4 rounded border-card-border"
+        />
+        <Label htmlFor={field.name}>
+          {field.label}
+          {field.required ? <span className="text-error-500"> *</span> : null}
+        </Label>
+      </div>
+    );
+  }
+
+  if (field.type === "select" && field.options) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label}
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select…</option>
+          {field.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  if (field.type === "date") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label}
+        <Input
+          type="date"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full px-3 py-2.5 text-sm"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
       {label}
@@ -441,7 +495,12 @@ function buildFieldsPayload(
       continue;
     }
 
-    payload[field.name] = field.type === "number" ? Number(rawValue) : rawValue;
+    payload[field.name] =
+      field.type === "number"
+        ? Number(rawValue)
+        : field.type === "boolean"
+          ? rawValue === "true"
+          : rawValue;
   }
 
   return payload;
