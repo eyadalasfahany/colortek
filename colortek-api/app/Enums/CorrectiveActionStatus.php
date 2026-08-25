@@ -14,10 +14,7 @@ enum CorrectiveActionStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Open => __('Open'),
-            self::InProgress => __('In progress'),
-            self::Resolved => __('Resolved'),
-            self::Cancelled => __('Cancelled'),
+            self::Open => __('Open'), self::InProgress => __('In progress'), self::Resolved => __('Resolved'), self::Cancelled => __('Cancelled')
         };
     }
 }

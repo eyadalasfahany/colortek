@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\HolidayType;
+use App\Enums\CorrectiveActionStatus;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
+use App\Enums\ResponsibleParty;
+use App\Enums\SiteReadiness;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BlockerCategory;
+use BackedEnum;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,7 +33,9 @@ final class EnumController extends Controller
             'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
             'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
             'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
-            'holiday_type' => $this->holidayTypes(),
+            'site_readiness' => $this->labeledEnumCases(SiteReadiness::cases()),
+            'corrective_action_status' => $this->labeledEnumCases(CorrectiveActionStatus::cases()),
+            'responsible_party' => $this->labeledEnumCases(ResponsibleParty::cases()),
             default => null,
         };
 
@@ -79,17 +84,8 @@ final class EnumController extends Controller
             ->all();
     }
 
-    /** @return list<array{value: string, label: string}> */
-    private function holidayTypes(): array
-    {
-        return [
-            ['value' => HolidayType::Public->value, 'label' => 'Public holiday'],
-            ['value' => HolidayType::Company->value, 'label' => 'Company holiday'],
-        ];
-    }
-
     /**
-     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus>  $cases
+     * @param  array<int, BackedEnum>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

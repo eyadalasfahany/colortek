@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Events;
+
+use App\Models\Journal;
+use App\Models\User;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+final class JournalReopened implements ShouldDispatchAfterCommit
+{
+    use Dispatchable, SerializesModels;
+
+    public function __construct(public Journal $journal, public User $user, public string $reason) {}
+}

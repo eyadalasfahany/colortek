@@ -12,15 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'phone', 'locale', 'primary_department_id', 'active', 'last_seen_at'])]
 #[Hidden(['password', 'remember_token'])]
-/**
- * @property Carbon|null $last_seen_at
- */
 class User extends Authenticatable
 {
     use HasApiTokens;
@@ -61,10 +57,5 @@ class User extends Authenticatable
             ->wherePivot('department_id', $department->id)
             ->wherePivot('is_supervisor', true)
             ->exists();
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        return $this->hasRole('super_admin');
     }
 }

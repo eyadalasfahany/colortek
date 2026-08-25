@@ -19,7 +19,7 @@ final class Setting extends Model
 
     protected function casts(): array
     {
-        return ['value' => 'array'];
+        return ['value' => 'json'];
     }
 
     public static function get(string $key, mixed $default = null): mixed

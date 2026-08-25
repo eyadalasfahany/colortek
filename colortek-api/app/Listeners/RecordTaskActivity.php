@@ -9,6 +9,9 @@ use App\Events\TaskBlocked;
 use App\Events\TaskClaimed;
 use App\Events\TaskCompleted;
 use App\Events\TaskCreated;
+use App\Events\TaskOverdue;
+use App\Events\TaskStarted;
+use App\Events\TaskUnblocked;
 use App\Services\Activity\ActivityRecorder;
 
 final class RecordTaskActivity
@@ -33,6 +36,21 @@ final class RecordTaskActivity
     public function handleTaskBlocked(TaskBlocked $event): void
     {
         $this->safely(fn () => $this->recordBlocked($event));
+    }
+
+    public function handleTaskStarted(TaskStarted $event): void
+    {
+        $this->safely(fn () => $this->recorder->record('started', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
+    }
+
+    public function handleTaskUnblocked(TaskUnblocked $event): void
+    {
+        $this->safely(fn () => $this->recorder->record('unblocked', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
+    }
+
+    public function handleTaskOverdue(TaskOverdue $event): void
+    {
+        $this->safely(fn () => $this->recorder->record('overdue', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
     }
 
     private function safely(callable $callback): void

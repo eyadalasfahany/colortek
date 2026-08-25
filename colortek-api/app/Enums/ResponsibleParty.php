@@ -14,10 +14,7 @@ enum ResponsibleParty: string
     public function label(): string
     {
         return match ($this) {
-            self::Client => __('Client'),
-            self::Contractor => __('Contractor'),
-            self::OtherTrade => __('Other trade'),
-            self::Colortek => __('Colortek'),
+            self::Client => __('Client'), self::Contractor => __('Contractor'), self::OtherTrade => __('Other trade'), self::Colortek => __('Colortek')
         };
     }
 }

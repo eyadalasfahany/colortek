@@ -7,6 +7,7 @@ namespace App\Services\Workflow;
 use App\Enums\TaskStatus;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Models\SiteVisit;
 use App\Models\Task;
 use App\Models\WorkflowInstance;
 use App\Models\WorkflowTaskDefinition;
@@ -33,6 +34,7 @@ final class WorkflowEngine
         $project = match (true) {
             $subject instanceof Project => $subject,
             $subject instanceof Payment => $subject->loadMissing('project')->project,
+            $subject instanceof SiteVisit => $subject->loadMissing('project')->project,
             default => null,
         };
         if ($project === null && $subject->relationLoaded('project')) {
@@ -100,6 +102,8 @@ final class WorkflowEngine
                 'reception_daily_journal',
                 'accounting_process_journal',
                 'reception_fix_journal',
+                'corrective_action_task',
+                'site_reinspection',
             ], true)) {
                 continue;
             }

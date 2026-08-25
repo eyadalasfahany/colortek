@@ -13,9 +13,7 @@ enum SiteReadiness: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => __('Pending'),
-            self::Ready => __('Ready'),
-            self::NotReady => __('Not ready'),
+            self::Pending => __('Pending'), self::Ready => __('Ready'), self::NotReady => __('Not ready')
         };
     }
 }

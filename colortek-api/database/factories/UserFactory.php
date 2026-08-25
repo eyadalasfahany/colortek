@@ -57,6 +57,7 @@ class UserFactory extends Factory
                 'sales' => 'sales',
                 'reception' => 'reception',
                 'accounting' => 'accounting',
+                'site' => 'site_engineer',
                 default => 'sales',
             });
         });

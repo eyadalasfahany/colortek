@@ -18,6 +18,8 @@ use App\Models\User;
 use App\Repositories\TaskRepository;
 use App\Services\Audit\AuditLogger;
 use App\Services\Payments\PaymentTaskHandler;
+use App\Services\Site\SiteBlockService;
+use App\Services\Site\SiteVisitTaskHandler;
 use App\Services\Workflow\WorkflowEngine;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -32,6 +34,8 @@ final class TaskService
         private WorkflowEngine $workflowEngine,
         private AuditLogger $auditLogger,
         private PaymentTaskHandler $paymentTaskHandler,
+        private SiteVisitTaskHandler $siteVisitTaskHandler,
+        private SiteBlockService $siteBlockService,
     ) {}
 
     public function claim(Task $task, User $user): Task
@@ -136,6 +140,7 @@ final class TaskService
         DB::transaction(function () use ($task, $user, $fields, $attachmentIds, &$createdTasks, &$completed): void {
             $this->validator->assertReadyToComplete($task, $fields, $attachmentIds);
             $this->paymentTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
+            $this->siteVisitTaskHandler->handleBeforeComplete($task, $user, $fields, $attachmentIds);
             $this->persistFieldValues($task, $fields);
 
             $completed = $this->transitionTo($task, TaskStatus::Completed, $user, afterUpdate: [
@@ -145,6 +150,7 @@ final class TaskService
 
             $createdTasks = $this->workflowEngine->advance($completed);
             $this->paymentTaskHandler->handleAfterComplete($completed, $user, $fields);
+            $this->siteVisitTaskHandler->handleAfterComplete($completed, $user, $fields);
         });
 
         DB::afterCommit(fn () => event(new TaskCompleted($completed->fresh(), $user, $createdTasks)));
@@ -157,13 +163,7 @@ final class TaskService
 
     public function overrideSiteBlock(Task $task, User $user, string $reason): Task
     {
-        if ($task->status !== TaskStatus::Pending) {
-            throw InvalidTaskTransition::between($task->status, TaskStatus::Ready);
-        }
-
-        return DB::transaction(fn (): Task => $this->transitionTo($task, TaskStatus::Ready, $user, note: $reason, afterUpdate: [
-            'ready_at' => now(),
-        ]));
+        return $this->siteBlockService->override($task, $user, $reason);
     }
 
     /** @param array<string, mixed> $fields */
