@@ -1,6 +1,8 @@
 "use client";
 
+import { ApiError } from "@/config/axios";
 import { Badge } from "@/components/tailgrids/core/badge";
+import { Button } from "@/components/tailgrids/core/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/tailgrids/core/card";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import type { TaskListItem } from "@/types/api";
@@ -16,9 +18,18 @@ import { cn } from "@/utils/cn";
 interface TaskListProps {
   tasks: TaskListItem[];
   emptyMessage: string;
+  showClaimButton?: boolean;
+  claimingTaskId?: number | null;
+  onClaim?: (taskId: number) => void;
 }
 
-export function TaskList({ tasks, emptyMessage }: TaskListProps) {
+export function TaskList({
+  tasks,
+  emptyMessage,
+  showClaimButton = false,
+  claimingTaskId = null,
+  onClaim,
+}: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <Card>
@@ -30,51 +41,77 @@ export function TaskList({ tasks, emptyMessage }: TaskListProps) {
   return (
     <div className="flex flex-col gap-3">
       {tasks.map((task) => (
-        <TaskListItemCard key={task.id} task={task} />
+        <TaskListItemCard
+          key={task.id}
+          task={task}
+          showClaimButton={showClaimButton}
+          isClaiming={claimingTaskId === task.id}
+          onClaim={onClaim}
+        />
       ))}
     </div>
   );
 }
 
-function TaskListItemCard({ task }: { task: TaskListItem }) {
+function TaskListItemCard({
+  task,
+  showClaimButton,
+  isClaiming,
+  onClaim,
+}: {
+  task: TaskListItem;
+  showClaimButton: boolean;
+  isClaiming: boolean;
+  onClaim?: (taskId: number) => void;
+}) {
   const priority = priorityLabel(task.priority);
+  const canClaim = showClaimButton && task.status === "ready" && onClaim;
 
   return (
-    <Link href={`/tasks/${task.id}`}>
-      <Card className="transition hover:border-brand-200 hover:shadow-sm">
-        <CardHeader className="items-start gap-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
-              {task.reference}
-            </p>
-            <CardTitle className="mt-1 text-base">{task.title}</CardTitle>
-            <CardDescription className="mt-2 flex flex-wrap items-center gap-2">
-              {task.department ? <span>{task.department.name}</span> : null}
-              {task.claimant ? <span>Claimed by {task.claimant.name}</span> : null}
-            </CardDescription>
-          </div>
+    <Card className="transition hover:border-brand-200 hover:shadow-sm">
+      <CardHeader className="items-start gap-4">
+        <Link href={`/tasks/${task.id}`} className="min-w-0 flex-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+            {task.reference}
+          </p>
+          <CardTitle className="mt-1 text-base">{task.title}</CardTitle>
+          <CardDescription className="mt-2 flex flex-wrap items-center gap-2">
+            {task.department ? <span>{task.department.name}</span> : null}
+            {task.claimant ? <span>Claimed by {task.claimant.name}</span> : null}
+          </CardDescription>
+        </Link>
 
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <Badge color={statusBadgeColor(task.status)} size="sm">
-              {formatStatusLabel(task.status)}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <Badge color={statusBadgeColor(task.status)} size="sm">
+            {formatStatusLabel(task.status)}
+          </Badge>
+          {priority ? (
+            <Badge color="warning" size="sm">
+              {priority}
             </Badge>
-            {priority ? (
-              <Badge color="warning" size="sm">
-                {priority}
-              </Badge>
-            ) : null}
-            <span
-              className={cn(
-                "text-xs",
-                task.is_overdue ? "font-medium text-error-500" : "text-text-tertiary",
-              )}
+          ) : null}
+          <span
+            className={cn(
+              "text-xs",
+              task.is_overdue ? "font-medium text-error-500" : "text-text-tertiary",
+            )}
+          >
+            {formatTaskDueAt(task.due_at)}
+          </span>
+          {canClaim ? (
+            <Button
+              variant="primary"
+              appearance="fill"
+              size="sm"
+              isDisabled={isClaiming}
+              onPress={() => onClaim(task.id)}
             >
-              {formatTaskDueAt(task.due_at)}
-            </span>
-          </div>
-        </CardHeader>
-      </Card>
-    </Link>
+              {isClaiming ? "Claiming…" : "Claim"}
+            </Button>
+          ) : null}
+        </div>
+      </CardHeader>
+    </Card>
   );
 }
 
@@ -91,3 +128,16 @@ export function TaskListSkeleton() {
     </div>
   );
 }
+
+export function getClaimErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Could not claim this task.";
+}
+

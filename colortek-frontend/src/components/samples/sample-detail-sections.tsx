@@ -1,0 +1,5 @@
+"use client";
+import { Card, CardDescription, CardTitle } from "@/components/tailgrids/core/card";
+import type { Sample } from "@/types/samples";
+import { formatMinutesAsHours, formatSampleDate } from "@/utils/sample-formatters";
+export function SampleDetailSections({sample}:{sample:Sample}){return(<div className="space-y-4"><Card><CardTitle>Requirement</CardTitle><p className="text-sm">{sample.client?.name} · {sample.color}{sample.texture?` · ${sample.texture}`:""}</p><p className="text-sm">Requested {formatSampleDate(sample.requested_at)}</p></Card><Card><CardTitle>Formula</CardTitle>{sample.formula?<pre className="text-sm whitespace-pre-wrap">{sample.formula.body??"Sheet only"}</pre>:<CardDescription>Awaiting formula.</CardDescription>}{sample.formula?.corrections?.map((c,i)=><div key={i} className="mt-2 rounded border p-2"><p className="text-xs line-through">{c.original}</p><p className="text-sm">{c.correction}</p></div>)}</Card><Card><CardTitle>Hours</CardTitle><p className="text-sm">Workshop {formatMinutesAsHours(sample.hours?.workshop_minutes)} · Tinting {formatMinutesAsHours(sample.hours?.tinting_minutes)}</p></Card></div>);}

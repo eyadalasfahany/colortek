@@ -138,6 +138,14 @@ async function request<T>(path: string, config: RequestConfig = {}): Promise<T> 
     return undefined as T;
   }
 
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/pdf") || contentType.includes("octet-stream")) {
+    if (!response.ok) {
+      return runResponseErrorInterceptors(new ApiError(response.status, "Request failed"));
+    }
+    return (await response.blob()) as T;
+  }
+
   const payload: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
@@ -165,5 +173,8 @@ export const axiosInstance = {
   },
   patch<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, { method: "PATCH", body });
+  },
+  postBlob(path: string, body?: unknown): Promise<Blob> {
+    return request<Blob>(path, { method: "POST", body });
   },
 };
