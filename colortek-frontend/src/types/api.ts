@@ -51,6 +51,27 @@ export interface FormSchemaField {
   options?: Array<{ value: string; label: string }>;
 }
 
+export interface PaymentSubjectContext {
+  type: "payment";
+  id: number;
+  installment_number: number;
+  amount: string;
+  currency: string;
+  method: string;
+  paid_at: string;
+  status: string;
+  notes?: string | null;
+  project?: { id: number; reference: string; name: string } | null;
+  client?: { id: number; name: string } | null;
+  salesperson?: { id: number; name: string } | null;
+  quotation?: { number: string; total_value: string; currency: string } | null;
+  attachments?: PreviousOutputAttachment[];
+}
+
+export function isPaymentSubjectContext(value: unknown): value is PaymentSubjectContext {
+  return isRecord(value) && value.type === "payment" && typeof value.id === "number";
+}
+
 export interface FormSchema {
   fields: FormSchemaField[];
 }
@@ -64,12 +85,17 @@ export interface PreviousOutputAttachment {
 
 export interface PreviousOutput {
   task_title?: string;
+  task_code?: string;
   completed_by?: string;
   fields?: Record<string, unknown>;
   attachments?: PreviousOutputAttachment[];
 }
 
+export type TaskSubjectContext = PaymentSubjectContext | import("@/types/samples").SampleSubjectContext;
+
 export interface TaskDetail extends TaskListItem {
+  task_code?: string | null;
+  subject?: TaskSubjectContext | null;
   instructions: string | null;
   claimed_at: string | null;
   started_at: string | null;
@@ -77,6 +103,7 @@ export interface TaskDetail extends TaskListItem {
   form_schema?: FormSchema | null;
   required_attachment_types?: string[];
   previous_outputs?: PreviousOutput[];
+  subject?: PaymentSubjectContext | null;
   project?: {
     id: number;
     reference: string;
