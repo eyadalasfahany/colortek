@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Enums\CorrectiveActionStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\SiteReadiness;
+use App\Enums\TaskStatus;
+use App\Models\CorrectiveAction;
 use App\Models\Payment;
+use App\Models\Setting;
+use App\Models\SiteVisit;
 use App\Models\Task;
+use App\Services\Site\SiteVisitService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use ValueError;
@@ -37,6 +44,17 @@ class TaskResource extends JsonResource
             'department' => DepartmentResource::make($this->whenLoaded('department')),
             'claimant' => UserResource::make($this->whenLoaded('claimant')),
             'project_id' => $this->project_id,
+            'task_code' => $definition?->code,
+            'project' => $this->when(
+                $this->relationLoaded('project') && $this->project !== null,
+                fn (): array => [
+                    'id' => $this->project->id,
+                    'reference' => $this->project->reference,
+                    'name' => $this->project->name,
+                    'client_name' => $this->project->relationLoaded('client') ? $this->project->client?->name : null,
+                ],
+            ),
+            'site_block' => $this->buildSiteBlockContext(),
             'form_schema' => $definition !== null
                 ? $this->normalizeFormSchema($definition->form_schema, $locale)
                 : null,
@@ -125,7 +143,95 @@ class TaskResource extends JsonResource
             ];
         }
 
+        if ($subject instanceof SiteVisit) {
+            $subject->loadMissing(['answers.checklistItem', 'measurements', 'correctiveActions']);
+
+            return [
+                'type' => 'site_visit',
+                'id' => $subject->id,
+                'reference' => $subject->reference,
+                'visit_number' => $subject->visit_number,
+                'visited_on' => $subject->visited_on?->toDateString(),
+                'readiness' => $subject->readiness->value,
+                'is_submitted' => $subject->isSubmitted(),
+                'project_name_on_form' => $subject->project_name_on_form,
+                'address_on_form' => $subject->address_on_form,
+                'quotation_number_on_form' => $subject->quotation_number_on_form,
+                'client_reference_note' => $subject->client_reference_note,
+                'client_signatory_name' => $subject->client_signatory_name,
+                'general_notes' => $subject->general_notes,
+                'measurement_count' => $subject->measurements->count(),
+                'has_critical_failures' => app(SiteVisitService::class)->hasCriticalFailures($subject),
+                'open_corrective_count' => $subject->correctiveActions
+                    ->where('status', CorrectiveActionStatus::Open)
+                    ->count(),
+                'conduct_task_id' => $subject->task_id,
+            ];
+        }
+
+        if ($subject instanceof CorrectiveAction) {
+            $subject->loadMissing(['checklistItem', 'siteVisit']);
+
+            return [
+                'type' => 'corrective_action',
+                'id' => $subject->id,
+                'description' => $subject->description,
+                'responsible_party' => $subject->responsible_party->value,
+                'status' => $subject->status->value,
+                'visit_reference' => $subject->siteVisit?->reference,
+                'checklist_label' => $subject->checklistItem?->label_en,
+            ];
+        }
+
         return null;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function buildSiteBlockContext(): ?array
+    {
+        if ($this->status !== TaskStatus::Pending) {
+            return null;
+        }
+
+        $this->loadMissing(['project', 'definition']);
+        $project = $this->project;
+        if ($project === null || $project->site_ready) {
+            return null;
+        }
+
+        $blockAll = $project->block_all_when_site_not_ready || (bool) Setting::get('block_all_when_site_not_ready', false);
+        $blocksWhenNotReady = $this->definition?->blocks_when_site_not_ready ?? false;
+        if (! $blockAll && ! $blocksWhenNotReady) {
+            return null;
+        }
+
+        $visit = SiteVisit::query()
+            ->where('project_id', $project->id)
+            ->where('readiness', SiteReadiness::NotReady)
+            ->orderByDesc('visit_number')
+            ->with(['answers.checklistItem', 'correctiveActions'])
+            ->first();
+
+        if ($visit === null) {
+            return null;
+        }
+
+        $failedItems = $visit->answers
+            ->filter(fn ($answer): bool => $answer->passed === false && $answer->checklistItem?->is_readiness_critical === true)
+            ->map(fn ($answer): string => (string) ($answer->checklistItem?->label_en ?? $answer->checklistItem?->code ?? ''))
+            ->filter(fn (string $label): bool => $label !== '')
+            ->values()
+            ->all();
+
+        return [
+            'visit_reference' => $visit->reference,
+            'visited_on' => $visit->visited_on?->toDateString(),
+            'summary' => $visit->general_notes,
+            'failed_items' => $failedItems,
+            'open_corrective_count' => $visit->correctiveActions
+                ->where('status', CorrectiveActionStatus::Open)
+                ->count(),
+        ];
     }
 
     /** @return array<string, mixed>|null */

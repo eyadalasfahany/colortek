@@ -14,6 +14,13 @@ import { EmployeePickerField } from "@/components/tasks/employee-picker-field";
 import { FormulaRegistrationPanel } from "@/components/tasks/formula-registration-panel";
 import { PaymentSubjectPanel } from "@/components/tasks/payment-subject-panel";
 import { SampleSubjectPanel } from "@/components/tasks/sample-subject-panel";
+import {
+  CorrectiveActionPanel,
+  SiteBlockPanel,
+  SiteConductVisitPanel,
+  SiteReadinessPanel,
+  SiteReinspectionPanel,
+} from "@/components/tasks/site-task-panels";
 import { queryKeys } from "@/lib/queryKeys";
 import { uploadAttachment, type UploadedAttachment } from "@/services/attachmentService";
 import {
@@ -25,6 +32,10 @@ import {
 import type { CreatedTask, FormSchemaField } from "@/types/api";
 import { isPaymentSubjectContext } from "@/types/api";
 import { isSampleSubjectContext } from "@/types/samples";
+import {
+  isCorrectiveActionSubjectContext,
+  isSiteVisitSubjectContext,
+} from "@/types/siteVisit";
 import { getDecidedAtFieldLabel, resolveTaskCode } from "@/utils/task-codes";
 import {
   formatAttachmentType,
@@ -54,6 +65,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [handoverMessage, setHandoverMessage] = useState<string | null>(null);
+  const [readiness, setReadiness] = useState("ready");
+  const [readinessSummary, setReadinessSummary] = useState("");
+  const [resolutionNote, setResolutionNote] = useState("");
 
   const taskQuery = useQuery({
     queryKey: queryKeys.tasks.detail(taskId),
@@ -99,6 +113,10 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const taskCode = task ? resolveTaskCode(task) : null;
   const paymentSubject = task?.subject && isPaymentSubjectContext(task.subject) ? task.subject : null;
   const sampleSubject = task?.subject && isSampleSubjectContext(task.subject) ? task.subject : null;
+  const siteVisitSubject =
+    task?.subject && isSiteVisitSubjectContext(task.subject) ? task.subject : null;
+  const correctiveSubject =
+    task?.subject && isCorrectiveActionSubjectContext(task.subject) ? task.subject : null;
   const isActionPending =
     claimMutation.isPending || startMutation.isPending || completeMutation.isPending;
 
@@ -106,7 +124,14 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
     if (!task?.required_attachment_types?.length) return false;
     return task.required_attachment_types.some((type) => (uploadedAttachments[type] ?? []).length === 0);
   }, [task, uploadedAttachments]);
-  const canComplete = task?.status === "in_progress" && (!taskCode || taskCode !== "sales_get_client_decision" || !missingRequiredAttachments);
+  const canComplete =
+    task?.status === "in_progress" &&
+    (!taskCode ||
+      ((taskCode !== "sales_get_client_decision" || !missingRequiredAttachments) &&
+        (taskCode !== "site_set_readiness" ||
+          readiness !== "not_ready" ||
+          readinessSummary.trim().length > 0) &&
+        (taskCode !== "corrective_action_task" || resolutionNote.trim().length > 0)));
 
   const primaryAction = useMemo(() => {
     if (!task) {
@@ -123,6 +148,15 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
           label: "Complete",
           action: () => {
             const fields = buildFieldsPayload(task.form_schema?.fields ?? [], formValues);
+            if (taskCode === "site_set_readiness") {
+              fields.readiness = readiness;
+              if (readiness === "not_ready") {
+                fields.summary = readinessSummary;
+              }
+            }
+            if (taskCode === "corrective_action_task") {
+              fields.resolution_note = resolutionNote;
+            }
             const attachmentIds = buildAttachmentIds(task.required_attachment_types ?? [], uploadedAttachments);
             completeMutation.mutate({ id: task.id, fields, attachmentIds });
           },
@@ -131,7 +165,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       default:
         return null;
     }
-  }, [canComplete, claimMutation, completeMutation, formValues, startMutation, task, uploadedAttachments]);
+  }, [canComplete, claimMutation, completeMutation, formValues, readiness, readinessSummary, resolutionNote, startMutation, task, taskCode, uploadedAttachments]);
 
   if (taskQuery.isLoading) {
     return <TaskDetailSkeleton />;
@@ -246,6 +280,45 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       {paymentSubject ? <PaymentSubjectPanel subject={paymentSubject} /> : null}
 
       {sampleSubject ? <SampleSubjectPanel subject={sampleSubject} /> : null}
+
+      {task.site_block && task.status === "pending" ? (
+        <SiteBlockPanel task={task} block={task.site_block} />
+      ) : null}
+
+      {siteVisitSubject && taskCode === "site_conduct_visit" ? (
+        <SiteConductVisitPanel subject={siteVisitSubject} />
+      ) : null}
+
+      {siteVisitSubject && taskCode === "site_set_readiness" ? (
+        <SiteReadinessPanel
+          subject={siteVisitSubject}
+          readiness={readiness}
+          summary={readinessSummary}
+          onReadinessChange={setReadiness}
+          onSummaryChange={setReadinessSummary}
+        />
+      ) : null}
+
+      {siteVisitSubject && taskCode === "site_reinspection" ? (
+        <SiteReinspectionPanel subject={siteVisitSubject} />
+      ) : null}
+
+      {correctiveSubject ? <CorrectiveActionPanel subject={correctiveSubject} /> : null}
+
+      {correctiveSubject && task.status === "in_progress" ? (
+        <Card className="mb-4">
+          <CardTitle className="mb-4 text-lg">Resolution</CardTitle>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="resolution-note">Resolution note *</Label>
+            <TextArea
+              id="resolution-note"
+              value={resolutionNote}
+              onChange={(event) => setResolutionNote(event.target.value)}
+              className="min-h-24"
+            />
+          </div>
+        </Card>
+      ) : null}
 
       {sampleSubject && taskCode === "reception_register_formula" ? <FormulaRegistrationPanel subject={sampleSubject} /> : null}
 
@@ -369,7 +442,15 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {!handoverMessage && primaryAction ? (
         <div className="flex flex-col gap-2">
-          {primaryAction.disabled ? <p className="text-sm text-text-secondary">Upload all required files before completing this task.</p> : null}
+          {primaryAction.disabled ? (
+            <p className="text-sm text-text-secondary">
+              {taskCode === "corrective_action_task" && !resolutionNote.trim()
+                ? "Enter a resolution note before completing."
+                : taskCode === "site_set_readiness" && readiness === "not_ready" && !readinessSummary.trim()
+                  ? "Enter a summary when marking the site not ready."
+                  : "Upload all required files before completing this task."}
+            </p>
+          ) : null}
           <div className="flex gap-3">
           <Button
             variant="primary"

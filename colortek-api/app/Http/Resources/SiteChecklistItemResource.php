@@ -10,6 +10,17 @@ final class SiteChecklistItemResource extends JsonResource
 {
     public function toArray($r): array
     {
-        return ['id' => $this->id, 'code' => $this->code, 'label' => $this->localizedLabel($r->getPreferredLanguage(['en', 'ar']) ?? 'en'), 'label_ar' => $this->label_ar, 'answer_type' => $this->answer_type->value, 'is_readiness_critical' => $this->is_readiness_critical, 'sort_order' => $this->sort_order];
+        return [
+            'id' => $this->id,
+            'code' => $this->code,
+            'label' => $this->localizedLabel($r->getPreferredLanguage(['en', 'ar']) ?? 'en'),
+            'label_en' => $this->label_en,
+            'label_ar' => $this->label_ar,
+            'answer_type' => $this->answer_type->value,
+            'unit' => $this->unit,
+            'is_readiness_critical' => $this->is_readiness_critical,
+            'allows_note' => $this->allows_note,
+            'sort_order' => $this->sort_order,
+        ];
     }
 }

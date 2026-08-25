@@ -48,7 +48,7 @@ final class TaskController extends Controller
             'data' => TaskResource::make($task->load([
                 'department',
                 'claimant',
-                'project',
+                'project.client',
                 'definition',
                 'subject',
                 'instance.tasks.definition',

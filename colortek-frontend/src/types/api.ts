@@ -91,11 +91,24 @@ export interface PreviousOutput {
   attachments?: PreviousOutputAttachment[];
 }
 
-export type TaskSubjectContext = PaymentSubjectContext | import("@/types/samples").SampleSubjectContext;
+export type TaskSubjectContext =
+  | PaymentSubjectContext
+  | import("@/types/samples").SampleSubjectContext
+  | import("@/types/siteVisit").SiteVisitSubjectContext
+  | import("@/types/siteVisit").CorrectiveActionSubjectContext;
+
+export interface SiteBlockContext {
+  visit_reference: string;
+  visited_on: string;
+  summary: string | null;
+  failed_items: string[];
+  open_corrective_count: number;
+}
 
 export interface TaskDetail extends TaskListItem {
   task_code?: string | null;
   subject?: TaskSubjectContext | null;
+  site_block?: SiteBlockContext | null;
   instructions: string | null;
   claimed_at: string | null;
   started_at: string | null;
