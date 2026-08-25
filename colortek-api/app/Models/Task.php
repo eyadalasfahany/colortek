@@ -119,6 +119,12 @@ final class Task extends Model
     }
 
     /** @return BelongsTo<Project, $this> */
+    public function blockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'blocked_by_user_id');
+    }
+
+    /** @return BelongsTo<Project, $this> */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
