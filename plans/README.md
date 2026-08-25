@@ -10,7 +10,7 @@ testable software on its own. Build them in order.
 | 3 | [2026-08-26-phase3-samples-and-formula.md](2026-08-26-phase3-samples-and-formula.md) | Sample request, manager approval, workshop, parallel tinting branch, formula registration, printed client approval form, sample chain UI | **draft** |
 | 4 | [2026-08-26-phase4-site-visit-and-readiness.md](2026-08-26-phase4-site-visit-and-readiness.md) | The measurement sheet, the condition statement, readiness blocking, corrective actions, re-inspection, offline drafts | **draft** |
 | 5 | [2026-08-26-phase5-live-layer.md](2026-08-26-phase5-live-layer.md) | Activity stream, SSE, notifications, control room, project detail, dashboards | **draft** |
-| 6 | Admin | Calendar and holidays, roles and permissions, workflow templates, checklist items, the three failure lists | not written |
+| 6 | [2026-08-26-phase6-admin.md](2026-08-26-phase6-admin.md) | Calendar and holidays, roles and permissions, workflow templates, checklist items, the three failure lists | **draft** |
 
 Each plan is written for an agent with no prior context. Every task names its
 files, its spec sections, and a check that can be run and verified.
