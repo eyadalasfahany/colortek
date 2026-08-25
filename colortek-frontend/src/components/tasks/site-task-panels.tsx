@@ -76,8 +76,8 @@ export function SiteReadinessPanel({
       <CardTitle>Set site readiness</CardTitle>
       <CardDescription className="mt-2">Visit {subject.reference}</CardDescription>
       <div className="mt-4 flex gap-3">
-        <Button variant={readiness === "ready" ? "primary" : "neutral"} appearance="fill" isDisabled={subject.has_critical_failures} onPress={() => onReadinessChange("ready")}>Ready</Button>
-        <Button variant={readiness === "not_ready" ? "primary" : "neutral"} appearance="fill" onPress={() => onReadinessChange("not_ready")}>Not ready</Button>
+        <Button variant={readiness === "ready" ? "primary" : "ghost"} appearance="fill" isDisabled={subject.has_critical_failures} onPress={() => onReadinessChange("ready")}>Ready</Button>
+        <Button variant={readiness === "not_ready" ? "primary" : "ghost"} appearance="fill" onPress={() => onReadinessChange("not_ready")}>Not ready</Button>
       </div>
       {subject.has_critical_failures ? (
         <Alert status="warning" className="mt-4"><AlertDescription>Critical checklist failures — Ready is disabled.</AlertDescription></Alert>

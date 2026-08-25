@@ -20,7 +20,11 @@ export async function patchSiteVisitDraft(id: number, payload: Record<string, un
 export async function saveSiteMeasurements(id: number, rows: SiteMeasurementRow[], idempotencyKey?: string): Promise<SiteVisitDetail> {
   const headers: Record<string, string> = {};
   if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
-  const response = await axiosInstance.post<ApiEnvelope<SiteVisitDetail>>(`/site-visits/${id}/measurements`, { rows }, { headers } as never);
+  const response = await axiosInstance.post<ApiEnvelope<SiteVisitDetail>>(
+    `/site-visits/${id}/measurements`,
+    { rows },
+    Object.keys(headers).length > 0 ? { headers } : undefined,
+  );
   return unwrapData(response);
 }
 

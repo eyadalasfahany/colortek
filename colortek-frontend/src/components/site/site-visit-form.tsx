@@ -191,7 +191,7 @@ export default function SiteVisitForm({ visitId }: { visitId: number }) {
             </div>
           ))}
           <div>
-            <Button variant="neutral" appearance="outline" onPress={() => void persistLocal({ ...draft, rows: [...draft.rows, emptyRow(draft.rows.length)] })}>Add row</Button>
+            <Button variant="ghost" appearance="outline" onPress={() => void persistLocal({ ...draft, rows: [...draft.rows, emptyRow(draft.rows.length)] })}>Add row</Button>
             <Button variant="primary" appearance="fill" className="ms-2" onPress={() => void saveDraftMutation.mutateAsync().then(() => setStep(1))}>Continue</Button>
           </div>
         </Card>
@@ -207,7 +207,7 @@ export default function SiteVisitForm({ visitId }: { visitId: number }) {
               {item.answer_type === "yes_no" ? (
                 <div className="mt-2 flex gap-2">
                   {(["yes", "no"] as const).map((v) => (
-                    <Button key={v} variant={draft.answers[item.code]?.value === (v === "yes") ? "primary" : "neutral"} appearance="fill" onPress={() => void persistLocal({ ...draft, answers: { ...draft.answers, [item.code]: { code: item.code, value: v === "yes", note: draft.answers[item.code]?.note ?? "" } } })}>
+                    <Button key={v} variant={draft.answers[item.code]?.value === (v === "yes") ? "primary" : "ghost"} appearance="fill" onPress={() => void persistLocal({ ...draft, answers: { ...draft.answers, [item.code]: { code: item.code, value: v === "yes", note: draft.answers[item.code]?.note ?? "" } } })}>
                       {v === "yes" ? "Yes" : "No"}
                     </Button>
                   ))}
@@ -222,7 +222,7 @@ export default function SiteVisitForm({ visitId }: { visitId: number }) {
             </div>
           ))}
           <div>
-            <Button variant="neutral" appearance="outline" onPress={() => setStep(0)}>Back</Button>
+            <Button variant="ghost" appearance="outline" onPress={() => setStep(0)}>Back</Button>
             <Button variant="primary" appearance="fill" className="ms-2" onPress={() => setStep(2)}>Review</Button>
           </div>
         </Card>
@@ -260,7 +260,7 @@ export default function SiteVisitForm({ visitId }: { visitId: number }) {
           ) : null}
           {error ? <Alert status="error"><AlertDescription>{error}</AlertDescription></Alert> : null}
           <div>
-            <Button variant="neutral" appearance="outline" onPress={() => setStep(1)}>Back</Button>
+            <Button variant="ghost" appearance="outline" onPress={() => setStep(1)}>Back</Button>
             <Button variant="primary" appearance="fill" className="ms-2" isDisabled={submitMutation.isPending} onPress={() => void submitMutation.mutateAsync()}>Submit visit</Button>
           </div>
         </Card>
