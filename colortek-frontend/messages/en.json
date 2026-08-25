@@ -1,0 +1,6 @@
+{
+  "controlRoom": { "title": "Control Room", "subtitle": "What is happening and what is stuck — live." },
+  "notifications": { "title": "Notifications", "markAll": "Mark all as read", "empty": "No notifications" },
+  "projects": { "title": "Projects", "empty": "No projects match your filters." },
+  "nav": { "controlRoom": "Control Room", "projects": "Projects", "workshop": "Workshop", "site": "Site", "samples": "Samples", "queue": "Queue", "myTasks": "My Tasks" }
+}

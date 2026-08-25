@@ -1,0 +1,6 @@
+{
+  "controlRoom": { "title": "غرفة التحكم", "subtitle": "ما يحدث الآن وما هو عالق — مباشرة." },
+  "notifications": { "title": "الإشعارات", "markAll": "تعليم الكل كمقروء", "empty": "لا إشعارات" },
+  "projects": { "title": "المشاريع", "empty": "لا مشاريع تطابق الفلاتر." },
+  "nav": { "controlRoom": "غرفة التحكم", "projects": "المشاريع", "workshop": "الورشة", "site": "الموقع", "samples": "العينات", "queue": "الطابور", "myTasks": "مهامي" }
+}
