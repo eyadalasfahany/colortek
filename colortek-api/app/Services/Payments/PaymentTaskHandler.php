@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Payments;
 
-use App\Enums\ActivitySeverity;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
+use App\Events\PaymentConfirmed;
 use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Attachment;
 use App\Models\Journal;
@@ -17,7 +17,6 @@ use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
-use App\Services\Activity\ActivityRecorder;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +25,7 @@ final class PaymentTaskHandler
     public function __construct(
         private JournalService $journalService,
         private JournalWorkflowService $journalWorkflowService,
-        private ActivityRecorder $activityRecorder,
+
     ) {}
 
     /**
@@ -124,16 +123,7 @@ final class PaymentTaskHandler
             $this->linkAttachments($proofIds, $payment);
         });
 
-        $this->activityRecorder->record(
-            type: 'payment.confirmed',
-            severity: ActivitySeverity::Success,
-            messageEn: sprintf('Payment of %s EGP confirmed for %s.', $fields['amount'], $project->reference),
-            messageAr: sprintf('تم تأكيد دفعة %s جنيه للمشروع %s.', $fields['amount'], $project->reference),
-            actor: $user,
-            project: $project,
-            subject: $payment->fresh(),
-            department: $task->department,
-        );
+        DB::afterCommit(fn () => event(new PaymentConfirmed($payment->fresh(), $user)));
     }
 
     /** @param array<string, mixed> $fields */

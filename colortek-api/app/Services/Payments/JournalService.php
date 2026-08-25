@@ -6,6 +6,7 @@ namespace App\Services\Payments;
 
 use App\Enums\JournalStatus;
 use App\Enums\PaymentStatus;
+use App\Events\JournalSubmitted;
 use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Journal;
 use App\Models\Payment;
@@ -94,6 +95,8 @@ final class JournalService
 
             $journal->recalculateTotal();
         });
+
+        DB::afterCommit(fn () => event(new JournalSubmitted($journal->fresh(), $user)));
     }
 
     public function submitEmptyJournal(Journal $journal): void

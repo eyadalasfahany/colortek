@@ -54,6 +54,7 @@ final class AuthController extends Controller
 
         return response()->json([
             'data' => UserResource::make($user),
+            'meta' => ['unread_notifications' => $user->unreadNotifications()->count()],
         ]);
     }
 }
