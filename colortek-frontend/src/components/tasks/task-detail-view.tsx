@@ -9,6 +9,11 @@ import { Input } from "@/components/tailgrids/core/input";
 import { Label } from "@/components/tailgrids/core/label";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import { TextArea } from "@/components/tailgrids/core/text-area";
+import { ClientDecisionPanel } from "@/components/tasks/client-decision-panel";
+import { EmployeePickerField } from "@/components/tasks/employee-picker-field";
+import { FormulaRegistrationPanel } from "@/components/tasks/formula-registration-panel";
+import { PaymentSubjectPanel } from "@/components/tasks/payment-subject-panel";
+import { SampleSubjectPanel } from "@/components/tasks/sample-subject-panel";
 import { queryKeys } from "@/lib/queryKeys";
 import { uploadAttachment, type UploadedAttachment } from "@/services/attachmentService";
 import {
@@ -18,6 +23,9 @@ import {
   startTask,
 } from "@/services/taskService";
 import type { CreatedTask, FormSchemaField } from "@/types/api";
+import { isPaymentSubjectContext } from "@/types/api";
+import { isSampleSubjectContext } from "@/types/samples";
+import { getDecidedAtFieldLabel, resolveTaskCode } from "@/utils/task-codes";
 import {
   formatAttachmentType,
   formatHandoverDueAt,
@@ -88,8 +96,17 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   });
 
   const task = taskQuery.data;
+  const taskCode = task ? resolveTaskCode(task) : null;
+  const paymentSubject = task?.subject && isPaymentSubjectContext(task.subject) ? task.subject : null;
+  const sampleSubject = task?.subject && isSampleSubjectContext(task.subject) ? task.subject : null;
   const isActionPending =
     claimMutation.isPending || startMutation.isPending || completeMutation.isPending;
+
+  const missingRequiredAttachments = useMemo(() => {
+    if (!task?.required_attachment_types?.length) return false;
+    return task.required_attachment_types.some((type) => (uploadedAttachments[type] ?? []).length === 0);
+  }, [task, uploadedAttachments]);
+  const canComplete = task?.status === "in_progress" && (!taskCode || taskCode !== "sales_get_client_decision" || !missingRequiredAttachments);
 
   const primaryAction = useMemo(() => {
     if (!task) {
@@ -98,9 +115,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
     switch (task.status) {
       case "ready":
-        return { label: "Claim", action: () => claimMutation.mutate(task.id) };
+        return { label: "Claim", action: () => claimMutation.mutate(task.id), disabled: false };
       case "claimed":
-        return { label: "Start", action: () => startMutation.mutate(task.id) };
+        return { label: "Start", action: () => startMutation.mutate(task.id), disabled: false };
       case "in_progress":
         return {
           label: "Complete",
@@ -109,11 +126,12 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             const attachmentIds = buildAttachmentIds(task.required_attachment_types ?? [], uploadedAttachments);
             completeMutation.mutate({ id: task.id, fields, attachmentIds });
           },
+          disabled: !canComplete,
         };
       default:
         return null;
     }
-  }, [claimMutation, completeMutation, formValues, startMutation, task, uploadedAttachments]);
+  }, [canComplete, claimMutation, completeMutation, formValues, startMutation, task, uploadedAttachments]);
 
   if (taskQuery.isLoading) {
     return <TaskDetailSkeleton />;
@@ -227,6 +245,18 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {paymentSubject ? <PaymentSubjectPanel subject={paymentSubject} /> : null}
 
+      {sampleSubject ? <SampleSubjectPanel subject={sampleSubject} /> : null}
+
+      {sampleSubject && taskCode === "reception_register_formula" ? <FormulaRegistrationPanel subject={sampleSubject} /> : null}
+
+      {sampleSubject && taskCode === "sales_get_client_decision" ? <ClientDecisionPanel subject={sampleSubject} /> : null}
+
+      {sampleSubject ? (
+        <div className="mb-4">
+          <Link href={`/samples/${sampleSubject.reference}`} className="text-sm text-brand-500 hover:text-brand-600">View sample {sampleSubject.reference}</Link>
+        </div>
+      ) : null}
+
       {task.previous_outputs && task.previous_outputs.length > 0 ? (
         <Card className="mb-4">
           <CardTitle className="mb-4 text-lg">What the last person did</CardTitle>
@@ -263,6 +293,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
               <DynamicField
                 key={field.name}
                 field={field}
+                taskCode={taskCode}
                 value={formValues[field.name] ?? ""}
                 onChange={(value) =>
                   setFormValues((current) => ({ ...current, [field.name]: value }))
@@ -337,16 +368,19 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       ) : null}
 
       {!handoverMessage && primaryAction ? (
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-2">
+          {primaryAction.disabled ? <p className="text-sm text-text-secondary">Upload all required files before completing this task.</p> : null}
+          <div className="flex gap-3">
           <Button
             variant="primary"
             appearance="fill"
             size="lg"
-            isDisabled={isActionPending}
+            isDisabled={isActionPending || primaryAction.disabled}
             onPress={primaryAction.action}
           >
             {isActionPending ? "Working…" : primaryAction.label}
           </Button>
+          </div>
         </div>
       ) : null}
 
@@ -362,19 +396,26 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
 function DynamicField({
   field,
+  taskCode,
   value,
   onChange,
 }: {
   field: FormSchemaField;
+  taskCode: string | null;
   value: string;
   onChange: (value: string) => void;
 }) {
+  const labelText = getDecidedAtFieldLabel(field);
   const label = (
     <Label>
-      {field.label}
+      {labelText}
       {field.required ? <span className="text-error-500"> *</span> : null}
     </Label>
   );
+
+  if (field.type === "employee" || (taskCode === "tinting_author_formula" && field.name === "author_employee_id")) {
+    return <EmployeePickerField value={value} onChange={onChange} required={field.required} />;
+  }
 
   if (field.type === "textarea") {
     return (
@@ -392,55 +433,21 @@ function DynamicField({
   if (field.type === "boolean") {
     return (
       <div className="flex items-center gap-2">
-        <input
-          id={field.name}
-          type="checkbox"
-          checked={value === "true"}
-          onChange={(event) => onChange(event.target.checked ? "true" : "false")}
-          className="size-4 rounded border-card-border"
-        />
-        <Label htmlFor={field.name}>
-          {field.label}
-          {field.required ? <span className="text-error-500"> *</span> : null}
-        </Label>
+        <input id={field.name} type="checkbox" checked={value === "true"} onChange={(e) => onChange(e.target.checked ? "true" : "false")} className="size-4 rounded border-card-border" />
+        <Label htmlFor={field.name}>{labelText}{field.required ? <span className="text-error-500"> *</span> : null}</Label>
       </div>
     );
   }
-
   if (field.type === "select" && field.options) {
     return (
-      <div className="flex flex-col gap-1.5">
-        {label}
-        <select
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"
-        >
-          <option value="">Select…</option>
-          {field.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="flex flex-col gap-1.5">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"><option value="">Select…</option>{field.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
     );
   }
-
   if (field.type === "date") {
     return (
-      <div className="flex flex-col gap-1.5">
-        {label}
-        <Input
-          type="date"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="w-full px-3 py-2.5 text-sm"
-        />
-      </div>
+      <div className="flex flex-col gap-1.5">{label}<Input type="date" value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2.5 text-sm" /></div>
     );
   }
-
   return (
     <div className="flex flex-col gap-1.5">
       {label}
@@ -495,12 +502,14 @@ function buildFieldsPayload(
       continue;
     }
 
-    payload[field.name] =
-      field.type === "number"
-        ? Number(rawValue)
-        : field.type === "boolean"
-          ? rawValue === "true"
-          : rawValue;
+    if (field.type === "boolean") {
+      if (rawValue === "true") payload[field.name] = true;
+      else if (rawValue === "false") payload[field.name] = false;
+      continue;
+    }
+    if (rawValue === undefined || rawValue === "") continue;
+    if (field.type === "number" || field.type === "money" || field.name === "author_employee_id") payload[field.name] = Number(rawValue);
+    else payload[field.name] = rawValue;
   }
 
   return payload;

@@ -85,12 +85,17 @@ export interface PreviousOutputAttachment {
 
 export interface PreviousOutput {
   task_title?: string;
+  task_code?: string;
   completed_by?: string;
   fields?: Record<string, unknown>;
   attachments?: PreviousOutputAttachment[];
 }
 
+export type TaskSubjectContext = PaymentSubjectContext | import("@/types/samples").SampleSubjectContext;
+
 export interface TaskDetail extends TaskListItem {
+  task_code?: string | null;
+  subject?: TaskSubjectContext | null;
   instructions: string | null;
   claimed_at: string | null;
   started_at: string | null;
@@ -98,6 +103,7 @@ export interface TaskDetail extends TaskListItem {
   form_schema?: FormSchema | null;
   required_attachment_types?: string[];
   previous_outputs?: PreviousOutput[];
+  subject?: PaymentSubjectContext | null;
   project?: {
     id: number;
     reference: string;

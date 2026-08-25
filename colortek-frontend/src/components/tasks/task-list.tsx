@@ -5,8 +5,6 @@ import { Badge } from "@/components/tailgrids/core/badge";
 import { Button } from "@/components/tailgrids/core/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/tailgrids/core/card";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
-import { queryKeys } from "@/lib/queryKeys";
-import { claimTask } from "@/services/taskService";
 import type { TaskListItem } from "@/types/api";
 import {
   formatStatusLabel,
@@ -14,18 +12,24 @@ import {
   priorityLabel,
   statusBadgeColor,
 } from "@/utils/task-formatters";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { cn } from "@/utils/cn";
 
 interface TaskListProps {
   tasks: TaskListItem[];
   emptyMessage: string;
-  showClaimAction?: boolean;
+  showClaimButton?: boolean;
+  claimingTaskId?: number | null;
+  onClaim?: (taskId: number) => void;
 }
 
-export function TaskList({ tasks, emptyMessage, showClaimAction = false }: TaskListProps) {
+export function TaskList({
+  tasks,
+  emptyMessage,
+  showClaimButton = false,
+  claimingTaskId = null,
+  onClaim,
+}: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <Card>
@@ -37,7 +41,13 @@ export function TaskList({ tasks, emptyMessage, showClaimAction = false }: TaskL
   return (
     <div className="flex flex-col gap-3">
       {tasks.map((task) => (
-        <TaskListItemCard key={task.id} task={task} showClaimAction={showClaimAction} />
+        <TaskListItemCard
+          key={task.id}
+          task={task}
+          showClaimButton={showClaimButton}
+          isClaiming={claimingTaskId === task.id}
+          onClaim={onClaim}
+        />
       ))}
     </div>
   );
@@ -45,48 +55,31 @@ export function TaskList({ tasks, emptyMessage, showClaimAction = false }: TaskL
 
 function TaskListItemCard({
   task,
-  showClaimAction,
+  showClaimButton,
+  isClaiming,
+  onClaim,
 }: {
   task: TaskListItem;
-  showClaimAction: boolean;
+  showClaimButton: boolean;
+  isClaiming: boolean;
+  onClaim?: (taskId: number) => void;
 }) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const priority = priorityLabel(task.priority);
-
-  const claimMutation = useMutation({
-    mutationFn: claimTask,
-    onSuccess: async (claimed) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all() });
-      router.push(`/tasks/${claimed.id}`);
-    },
-    onError: async (error: unknown) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all() });
-      if (error instanceof ApiError && error.status === 409) {
-        router.refresh();
-      }
-    },
-  });
-
-  const canClaim = showClaimAction && task.status === "ready";
+  const canClaim = showClaimButton && task.status === "ready" && onClaim;
 
   return (
     <Card className="transition hover:border-brand-200 hover:shadow-sm">
       <CardHeader className="items-start gap-4">
-        <div className="min-w-0 flex-1">
+        <Link href={`/tasks/${task.id}`} className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
             {task.reference}
           </p>
-          <CardTitle className="mt-1 text-base">
-            <Link href={`/tasks/${task.id}`} className="hover:text-brand-600">
-              {task.title}
-            </Link>
-          </CardTitle>
+          <CardTitle className="mt-1 text-base">{task.title}</CardTitle>
           <CardDescription className="mt-2 flex flex-wrap items-center gap-2">
             {task.department ? <span>{task.department.name}</span> : null}
             {task.claimant ? <span>Claimed by {task.claimant.name}</span> : null}
           </CardDescription>
-        </div>
+        </Link>
 
         <div className="flex shrink-0 flex-col items-end gap-2">
           <Badge color={statusBadgeColor(task.status)} size="sm">
@@ -110,10 +103,10 @@ function TaskListItemCard({
               variant="primary"
               appearance="fill"
               size="sm"
-              isDisabled={claimMutation.isPending}
-              onPress={() => claimMutation.mutate(task.id)}
+              isDisabled={isClaiming}
+              onPress={() => onClaim(task.id)}
             >
-              {claimMutation.isPending ? "Claiming…" : "Claim"}
+              {isClaiming ? "Claiming…" : "Claim"}
             </Button>
           ) : null}
         </div>
@@ -135,3 +128,16 @@ export function TaskListSkeleton() {
     </div>
   );
 }
+
+export function getClaimErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Could not claim this task.";
+}
+
