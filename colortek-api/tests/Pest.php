@@ -28,6 +28,8 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class)->in('Feature');
 
+require_once __DIR__.'/Feature/Support/SampleFlowHelpers.php';
+
 uses(TestCase::class, RefreshDatabase::class)->in('Unit');
 
 /*

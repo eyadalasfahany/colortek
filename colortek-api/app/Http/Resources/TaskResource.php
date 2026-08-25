@@ -6,6 +6,7 @@ namespace App\Http\Resources;
 
 use App\Enums\PaymentMethod;
 use App\Models\Payment;
+use App\Models\Sample;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -122,6 +123,41 @@ class TaskResource extends JsonResource
                     'type' => $attachment->type,
                     'filename' => $attachment->original_name,
                 ])->values()->all(),
+            ];
+        }
+
+        if ($subject instanceof Sample) {
+            $subject->loadMissing(['client', 'project', 'parentSample.approvals', 'attachments']);
+
+            $parentRejection = $subject->parentSample?->approvals
+                ->first(fn ($approval) => $approval->type->value === 'client'
+                    && $approval->decision?->value === 'rejected');
+
+            return [
+                'type' => 'sample',
+                'id' => $subject->id,
+                'reference' => $subject->reference,
+                'color' => $subject->color,
+                'texture' => $subject->texture,
+                'client_reference' => $subject->client_reference,
+                'size' => $subject->size,
+                'finish_requirement' => $subject->finish_requirement,
+                'status' => $subject->status->value,
+                'is_presale' => $subject->is_presale,
+                'attempt_number' => $subject->attempt_number,
+                'modification_reason' => $subject->modification_reason,
+                'parent_reference' => $subject->parentSample?->reference,
+                'parent_rejection_reason' => $parentRejection?->comments,
+                'client' => [
+                    'id' => $subject->client->id,
+                    'name' => $subject->client->name,
+                ],
+                'project' => $subject->project ? [
+                    'id' => $subject->project->id,
+                    'reference' => $subject->project->reference,
+                    'name' => $subject->project->name,
+                ] : null,
+                'attachments' => AttachmentResource::collection($subject->attachments ?? collect())->resolve(),
             ];
         }
 

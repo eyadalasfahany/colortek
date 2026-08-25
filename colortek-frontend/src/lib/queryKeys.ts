@@ -24,4 +24,21 @@ export const queryKeys = {
     failures: (tab: string) => ["admin", "failures", tab] as const,
     coverage: () => ["admin", "coverage"] as const,
   },
+  dashboard: {
+    controlRoom: () => ["dashboard", "control-room"] as const,
+    workshop: () => ["dashboard", "workshop"] as const,
+    site: () => ["dashboard", "site"] as const,
+    samples: () => ["dashboard", "samples"] as const,
+  },
+  projects: {
+    list: (params?: Record<string, unknown>) => ["projects", "list", params] as const,
+    detail: (reference: string) => ["projects", "detail", reference] as const,
+    workflow: (id: number) => ["projects", "workflow", id] as const,
+    activity: (id: number) => ["projects", "activity", id] as const,
+  },
+  notifications: {
+    list: () => ["notifications", "list"] as const,
+    unread: () => ["notifications", "unread"] as const,
+  },
+  activity: { feed: () => ["activity", "feed"] as const },
 } as const;
