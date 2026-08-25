@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\Workflow;
 
-use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Events\TaskCreated;
 use App\Models\Project;
@@ -45,7 +44,7 @@ final class TaskFactory
                 'instructions' => $definition->instructions_en,
                 'department_id' => $definition->department_id,
                 'status' => $status,
-                'priority' => $definition->priority ?? TaskPriority::Normal,
+                'priority' => $this->resolvePriority($definition, $instance),
                 'due_at' => $this->deadlineCalculator->for(
                     $definition,
                     $instance->project,
@@ -97,6 +96,21 @@ final class TaskFactory
         }
 
         return TaskStatus::Pending;
+    }
+
+    private function resolvePriority(WorkflowTaskDefinition $definition, WorkflowInstance $instance): TaskPriority
+    {
+        if ($definition->code !== 'manager_approve_sample') {
+            return $definition->priority ?? TaskPriority::Normal;
+        }
+
+        $instance->loadMissing('subject');
+        if ($instance->subject instanceof Sample
+            && $instance->subject->attempt_number >= (int) (Setting::get('sample_repeat_attempt_threshold') ?? 4)) {
+            return TaskPriority::High;
+        }
+
+        return $definition->priority ?? TaskPriority::Normal;
     }
 
     private function generateReference(WorkflowInstance $instance, WorkflowTaskDefinition $definition): string

@@ -41,7 +41,7 @@ it('scenario 1: a sample with no client cannot be created', function (): void {
 
 it('scenario 2: a sample with no project requires sample.create_presale', function (): void {
     $client = Client::factory()->create();
-    $sales = User::factory()->inDepartment('sales')->create();
+    $sales = salesUserWithoutPresale();
     Sanctum::actingAs($sales);
 
     $this->postJson('/api/v1/samples', [
