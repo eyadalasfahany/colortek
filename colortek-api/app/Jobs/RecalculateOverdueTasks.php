@@ -8,6 +8,7 @@ use App\Enums\TaskStatus;
 use App\Events\TaskOverdue;
 use App\Models\Task;
 use App\Services\Time\WorkingCalendar;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ final class RecalculateOverdueTasks implements ShouldQueue
 
     public function handle(WorkingCalendar $c): void
     {
-        if (! $c->isWorkingTime(now())) {
+        if (! $c->isWorkingTime(CarbonImmutable::now())) {
             return;
         }
         Task::whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])->where('is_overdue', false)->whereNotNull('due_at')->where('due_at', '<', now())->each(function ($t) {

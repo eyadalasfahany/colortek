@@ -6,9 +6,15 @@ namespace App\Models;
 
 use App\Enums\CorrectiveActionStatus;
 use App\Enums\ResponsibleParty;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property CorrectiveActionStatus $status
+ * @property ResponsibleParty $responsible_party
+ * @property CarbonImmutable|null $resolved_at
+ */
 final class CorrectiveAction extends Model
 {
     protected $fillable = ['site_visit_id', 'checklist_item_id', 'description', 'responsible_party', 'task_id', 'status', 'resolution_note', 'resolved_at'];

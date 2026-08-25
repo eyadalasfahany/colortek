@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\SiteReadiness;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Database\Factories\SiteVisitFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+/**
+ * @property SiteReadiness $readiness
+ * @property Carbon|null $visited_on
+ * @property CarbonImmutable|null $submitted_at
+ * @property-read Project $project
+ */
 final class SiteVisit extends Model
 {
     /** @use HasFactory<SiteVisitFactory> */

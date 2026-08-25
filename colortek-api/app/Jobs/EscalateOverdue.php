@@ -9,6 +9,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Notifications\TaskEscalatedNotification;
 use App\Services\Time\WorkingCalendar;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -18,7 +19,7 @@ final class EscalateOverdue implements ShouldQueue
 
     public function handle(WorkingCalendar $c): void
     {
-        if (! $c->isWorkingTime(now())) {
+        if (! $c->isWorkingTime(CarbonImmutable::now())) {
             return;
         }
         Task::where('is_overdue', true)->whereNull('escalated_at')->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])->each(function ($t) {

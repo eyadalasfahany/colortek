@@ -18,7 +18,7 @@ abstract class BaseRepository
     public function __construct(protected string $modelClass) {}
 
     /** @return TModel|null */
-    public function find(int $id): ?Model
+    public function find(int $id)
     {
         /** @var TModel|null $model */
         $model = $this->modelClass::query()->find($id);
@@ -27,7 +27,7 @@ abstract class BaseRepository
     }
 
     /** @param list<string> $relations @return TModel */
-    public function findOneOrFail(int $id, array $relations = []): Model
+    public function findOneOrFail(int $id, array $relations = [])
     {
         /** @var TModel|null $model */
         $model = $this->query()->with($relations)->find($id);
@@ -40,17 +40,27 @@ abstract class BaseRepository
     }
 
     /** @param array<string, mixed> $data @return TModel */
-    public function create(array $data): Model
+    public function create(array $data)
     {
-        return $this->modelClass::query()->create($data);
+        /** @var TModel $model */
+        $model = $this->modelClass::query()->create($data);
+
+        return $model;
     }
 
-    /** @param array<string, mixed> $data @return TModel */
-    public function update(Model $model, array $data): Model
+    /**
+     * @param  TModel  $model
+     * @param  array<string, mixed>  $data
+     * @return TModel
+     */
+    public function update(Model $model, array $data)
     {
         $model->update($data);
 
-        return $model->fresh() ?? $model;
+        /** @var TModel $fresh */
+        $fresh = $model->fresh() ?? $model;
+
+        return $fresh;
     }
 
     /**

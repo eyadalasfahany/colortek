@@ -12,6 +12,7 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * @property CarbonImmutable $date
+ * @property HolidayType $type
  * @property bool $is_recurring
  */
 final class Holiday extends Model

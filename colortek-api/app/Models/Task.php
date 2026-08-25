@@ -118,7 +118,7 @@ final class Task extends Model
         return $this->belongsTo(BlockerCategory::class);
     }
 
-    /** @return BelongsTo<Project, $this> */
+    /** @return BelongsTo<User, $this> */
     public function blockedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'blocked_by_user_id');

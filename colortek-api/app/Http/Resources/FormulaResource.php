@@ -20,7 +20,7 @@ class FormulaResource extends JsonResource
             'version' => $this->version,
             'body' => $this->body,
             'status' => $this->status->value,
-            'authored_at' => $this->authored_at?->toDateString(),
+            'authored_at' => $this->authored_at->toDateString(),
             'registered_at' => $this->registered_at?->toIso8601String(),
             'author_employee' => $this->whenLoaded('authorEmployee', fn () => [
                 'id' => $this->authorEmployee->id,

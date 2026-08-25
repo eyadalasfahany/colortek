@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\SiteMeasurementDeduction;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin SiteMeasurementDeduction */
 final class SiteMeasurementDeductionResource extends JsonResource
 {
     public function toArray($r): array

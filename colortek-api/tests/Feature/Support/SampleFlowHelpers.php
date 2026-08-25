@@ -67,6 +67,10 @@ function advanceSampleToWorkshop(Sample $sample, User $sales): Sample
         ->first();
 
     if ($salesTask !== null && $salesTask->status !== TaskStatus::Completed) {
+        if ($sample->project === null) {
+            throw new InvalidArgumentException('Sample must belong to a project.');
+        }
+
         completeSampleTask($salesTask, $sales, sampleSalesFields($sample->project));
     }
 

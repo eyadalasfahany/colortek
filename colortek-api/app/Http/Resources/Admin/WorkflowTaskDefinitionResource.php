@@ -30,7 +30,7 @@ final class WorkflowTaskDefinitionResource extends JsonResource
             ]),
             'sla_minutes' => $definition->sla_minutes,
             'escalate_after_minutes' => $definition->escalate_after_minutes,
-            'priority' => $definition->priority?->value,
+            'priority' => $definition->priority->value,
             'is_entry_point' => $definition->is_entry_point,
         ];
     }

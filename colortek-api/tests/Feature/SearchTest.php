@@ -13,5 +13,6 @@ it('search', function () {
     $m->assignRole('management');
     Project::factory()->create(['reference' => 'SO9577']);
     Sanctum::actingAs($m);
-    expect(collect($this->getJson('/api/v1/search?q=SO9577')->json('data.projects'))->pluck('reference'))->toContain('SO9577');
+    $response = $this->getJson('/api/v1/search?q=SO9577');
+    expect(collect($response->json('data.projects'))->pluck('reference'))->toContain('SO9577');
 });

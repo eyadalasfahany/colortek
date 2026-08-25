@@ -9,6 +9,9 @@ use Database\Factories\SiteMeasurementDeductionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property DeductionSign $sign
+ */
 final class SiteMeasurementDeduction extends Model
 {
     /** @use HasFactory<SiteMeasurementDeductionFactory> */

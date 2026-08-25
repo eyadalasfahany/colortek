@@ -144,20 +144,20 @@ final class PaymentTaskHandler
         }
 
         if (($fields['review_result'] ?? '') === 'query') {
-            /** @var Payment|null $payment */
             $payment = $task->subject instanceof Payment ? $task->subject : null;
-            $project = $payment?->project ?? $task->project;
+            $project = $payment !== null ? $payment->project : $task->project;
+            $projectReference = $project !== null ? $project->reference : 'project';
 
             $this->activityRecorder->record(
                 type: 'payment.queried',
                 severity: ActivitySeverity::Warning,
                 messageEn: sprintf(
                     'Payment sent back to Sales for %s.',
-                    $project?->reference ?? 'project',
+                    $projectReference,
                 ),
                 messageAr: sprintf(
                     'تم إرجاع الدفعة إلى المبيعات للمشروع %s.',
-                    $project?->reference ?? 'project',
+                    $projectReference,
                 ),
                 actor: $user,
                 project: $project,

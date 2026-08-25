@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\SiteVisitAnswer;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin SiteVisitAnswer */
 final class SiteVisitAnswerResource extends JsonResource
 {
     public function toArray($r): array

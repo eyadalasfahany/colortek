@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\SiteChecklistItem;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin SiteChecklistItem */
 final class SiteChecklistItemResource extends JsonResource
 {
     public function toArray($r): array

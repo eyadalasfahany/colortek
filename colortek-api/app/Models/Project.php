@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 /**
  * @property ProjectStage $stage
  * @property array<string, mixed>|null $sla_profile
+ * @property-read Client|null $client
  */
 final class Project extends Model
 {

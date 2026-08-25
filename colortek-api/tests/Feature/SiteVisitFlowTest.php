@@ -57,7 +57,8 @@ it('scenario 1: all five condition items and notes persist', function (): void {
     ['visit' => $visit, 'engineer' => $engineer] = startSiteVisitFlow();
     Sanctum::actingAs($engineer);
     $this->postJson("/api/v1/site-visits/{$visit->id}/submit", ['answers' => allChecklistAnswers(), 'signed_attachment_id' => uploadSignedScan($engineer)])->assertOk();
-    expect($this->getJson("/api/v1/site-visits/{$visit->id}")->json('data.answers'))->toHaveCount(5);
+    $response = $this->getJson("/api/v1/site-visits/{$visit->id}");
+    expect($response->json('data.answers'))->toHaveCount(5);
 });
 it('scenario 2: critical no forces not_ready', function (): void {
     ['visit' => $visit, 'task' => $task, 'engineer' => $engineer, 'project' => $project] = startSiteVisitFlow();
@@ -104,7 +105,8 @@ it('scenario 7: forty rows two pages', function (): void {
         $rows[] = ['page_number' => $i < 23 ? 1 : 2, 'line_number' => ($i % 23) + 1, 'element_name' => $i === 0 ? 'X' : '', 'sort_order' => $i];
     }
     $this->postJson("/api/v1/site-visits/{$visit->id}/measurements", ['rows' => $rows])->assertOk();
-    expect($this->getJson("/api/v1/site-visits/{$visit->id}")->json('data.measurements'))->toHaveCount(40);
+    $response = $this->getJson("/api/v1/site-visits/{$visit->id}");
+    expect($response->json('data.measurements'))->toHaveCount(40);
 });
 it('scenario 8: submit without scan rejected', function (): void {
     ['visit' => $visit, 'engineer' => $engineer] = startSiteVisitFlow();
@@ -180,7 +182,8 @@ it('scenario 13: client corrective in sales queue', function (): void {
 it('scenario 14: Arabic checklist labels from API', function (): void {
     $this->seed(SiteChecklistSeeder::class);
     Sanctum::actingAs(siteEngineer());
-    $labels = collect($this->getJson('/api/v1/site-checklist-items')->json('data'))->pluck('label_ar');
+    $response = $this->getJson('/api/v1/site-checklist-items');
+    $labels = collect($response->json('data'))->pluck('label_ar');
     expect($labels)->toContain('نسبة الرطوبة بالموقع');
     expect(WorkflowTemplate::query()->where('code', 'site_visit')->where('is_active', true)->exists())->toBeTrue();
 });

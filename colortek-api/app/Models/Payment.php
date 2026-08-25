@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property PaymentMethod $method
  * @property PaymentStatus $status
  * @property Carbon $paid_at
+ * @property-read Project|null $project
  */
 final class Payment extends Model
 {

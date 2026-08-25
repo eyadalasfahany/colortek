@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\FormulaStatus;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Database\Factories\FormulaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property FormulaStatus $status
+ * @property Carbon $authored_at
+ * @property CarbonImmutable|null $registered_at
+ * @property-read Employee|null $authorEmployee
+ */
 final class Formula extends Model
 {
     /** @use HasFactory<FormulaFactory> */
@@ -39,6 +47,7 @@ final class Formula extends Model
         return $this->belongsTo(Sample::class);
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function authorEmployee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'author_employee_id');

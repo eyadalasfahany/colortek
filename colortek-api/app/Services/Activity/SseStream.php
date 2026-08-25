@@ -16,7 +16,6 @@ final class SseStream
     {
         return response()->stream(function () use ($user, $lastEventId): void {
             $cursor = $lastEventId ?? 0;
-            $iterations = 0;
 
             while (! connection_aborted()) {
                 $events = $this->activityQuery->forUser($user)
@@ -42,7 +41,7 @@ final class SseStream
 
                 sleep(1);
 
-                if (app()->environment('testing') && ++$iterations >= 1) {
+                if (app()->environment('testing')) {
                     break;
                 }
             }

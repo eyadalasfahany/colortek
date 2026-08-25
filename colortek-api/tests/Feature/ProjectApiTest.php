@@ -19,6 +19,7 @@ it('workflow delivery stub', function () {
     $m->assignRole('management');
     $p = Project::factory()->create(['stage' => 'site']);
     Sanctum::actingAs($m);
-    $d = collect($this->getJson("/api/v1/projects/{$p->id}/workflow")->json('data.stages'))->firstWhere('key', 'delivery');
+    $response = $this->getJson("/api/v1/projects/{$p->id}/workflow");
+    $d = collect($response->json('data.stages'))->firstWhere('key', 'delivery');
     expect($d['configured'])->toBeFalse();
 });

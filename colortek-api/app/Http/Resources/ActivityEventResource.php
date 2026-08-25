@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\ActivityEvent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin ActivityEvent */
 final class ActivityEventResource extends JsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        $locale = $request->user()?->locale ?? app()->getLocale();
+        $locale = ($request->user()->locale ?? null) ?: app()->getLocale();
         $payload = $this->payload ?? [];
 
         return [

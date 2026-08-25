@@ -5,10 +5,18 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ChecklistAnswerType;
+use Database\Factories\SiteChecklistItemFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property ChecklistAnswerType $answer_type
+ */
 final class SiteChecklistItem extends Model
 {
+    /** @use HasFactory<SiteChecklistItemFactory> */
+    use HasFactory;
+
     protected $fillable = ['code', 'label_en', 'label_ar', 'answer_type', 'unit', 'is_readiness_critical', 'allows_note', 'sort_order', 'active'];
 
     protected function casts(): array

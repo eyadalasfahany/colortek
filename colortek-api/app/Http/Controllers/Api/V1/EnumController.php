@@ -16,7 +16,6 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BlockerCategory;
-use BackedEnum;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -85,7 +84,7 @@ final class EnumController extends Controller
     }
 
     /**
-     * @param  array<int, BackedEnum>  $cases
+     * @param  array<int, CorrectiveActionStatus|JournalStatus|PaymentMethod|PaymentStatus|ProjectStage|QuotationStatus|ResponsibleParty|SiteReadiness>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

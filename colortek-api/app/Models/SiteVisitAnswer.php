@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $answer_value
+ * @property-read SiteChecklistItem|null $checklistItem
+ */
 final class SiteVisitAnswer extends Model
 {
     /** @use HasFactory<SiteVisitAnswerFactory> */

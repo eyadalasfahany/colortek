@@ -14,8 +14,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property list<string>|null $required_fields
  * @property list<string>|null $required_attachment_types
+ * @property array<string, mixed>|null $form_schema
+ * @property TaskPriority $priority
  * @property int|null $sla_minutes
- * @property WorkflowTemplate $template
+ * @property-read WorkflowTemplate $template
  */
 final class WorkflowTaskDefinition extends Model
 {

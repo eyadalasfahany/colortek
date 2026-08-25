@@ -6,11 +6,18 @@ namespace App\Models;
 
 use App\Enums\SampleApprovalDecision;
 use App\Enums\SampleApprovalType;
+use Carbon\CarbonImmutable;
 use Database\Factories\SampleApprovalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property SampleApprovalType $type
+ * @property SampleApprovalDecision|null $decision
+ * @property CarbonImmutable|null $decided_at
+ * @property CarbonImmutable|null $form_generated_at
+ */
 final class SampleApproval extends Model
 {
     /** @use HasFactory<SampleApprovalFactory> */

@@ -5,10 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ActivitySeverity;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property ActivitySeverity $severity
+ * @property array<string, mixed>|null $payload
+ * @property CarbonImmutable|null $created_at
+ */
 final class ActivityEvent extends Model
 {
     public $timestamps = false;

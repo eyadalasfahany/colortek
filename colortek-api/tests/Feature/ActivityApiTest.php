@@ -19,5 +19,6 @@ it('returns visible activity only', function (): void {
     $r->record('task.created', ActivitySeverity::Info, 'Visible', 'v', project: $visible);
     $r->record('task.created', ActivitySeverity::Info, 'Hidden', 'h', project: $hidden);
     Sanctum::actingAs($sales);
-    expect(collect($this->getJson('/api/v1/activity')->json('data'))->pluck('message'))->toContain('Visible')->not->toContain('Hidden');
+    $response = $this->getJson('/api/v1/activity');
+    expect(collect($response->json('data'))->pluck('message'))->toContain('Visible')->not->toContain('Hidden');
 });
