@@ -168,8 +168,8 @@ export const axiosInstance = {
   get<T>(path: string, config?: { params?: QueryParams }): Promise<T> {
     return request<T>(path, { method: "GET", params: config?.params });
   },
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>(path, { method: "POST", body });
+  post<T>(path: string, body?: unknown, config?: { headers?: Record<string, string> }): Promise<T> {
+    return request<T>(path, { method: "POST", body, headers: config?.headers });
   },
   patch<T>(path: string, body?: unknown): Promise<T> {
     return request<T>(path, { method: "PATCH", body });
