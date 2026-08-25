@@ -1,1 +1,11 @@
-<?php declare(strict_types=1); namespace App\Enums; enum DeductionSign: string { case Subtract='subtract'; case Add='add'; }
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums;
+
+enum DeductionSign: string
+{
+    case Subtract = 'subtract';
+    case Add = 'add';
+}

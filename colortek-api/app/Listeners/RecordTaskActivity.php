@@ -148,4 +148,63 @@ final class RecordTaskActivity
             department: $task->department,
         );
     }
+
+    private function recordStarted(TaskStarted $event): void
+    {
+        $task = $event->task->loadMissing(['department', 'project']);
+
+        $this->recorder->record(
+            type: 'task.started',
+            severity: ActivitySeverity::Info,
+            messageEn: __(':user started :title.', [
+                'user' => $event->user->name,
+                'title' => $task->localizedTitle('en'),
+            ], 'en'),
+            messageAr: __(':user started :title.', [
+                'user' => $event->user->name,
+                'title' => $task->localizedTitle('ar'),
+            ], 'ar'),
+            actor: $event->user,
+            project: $task->project,
+            subject: $task,
+            department: $task->department,
+        );
+    }
+
+    private function recordUnblocked(TaskUnblocked $event): void
+    {
+        $task = $event->task->loadMissing(['department', 'project']);
+
+        $this->recorder->record(
+            type: 'task.unblocked',
+            severity: ActivitySeverity::Success,
+            messageEn: __(':user unblocked :title.', [
+                'user' => $event->user->name,
+                'title' => $task->localizedTitle('en'),
+            ], 'en'),
+            messageAr: __(':user unblocked :title.', [
+                'user' => $event->user->name,
+                'title' => $task->localizedTitle('ar'),
+            ], 'ar'),
+            actor: $event->user,
+            project: $task->project,
+            subject: $task,
+            department: $task->department,
+        );
+    }
+
+    private function recordOverdue(TaskOverdue $event): void
+    {
+        $task = $event->task->loadMissing(['department', 'project']);
+
+        $this->recorder->record(
+            type: 'task.overdue',
+            severity: ActivitySeverity::Warning,
+            messageEn: __(':title is overdue.', ['title' => $task->localizedTitle('en')], 'en'),
+            messageAr: __(':title is overdue.', ['title' => $task->localizedTitle('ar')], 'ar'),
+            project: $task->project,
+            subject: $task,
+            department: $task->department,
+        );
+    }
 }

@@ -1,34 +1,72 @@
-import InventoryOverview from "./_component/inventory-overview";
-import LastTransactionsTable from "./_component/last-transactions-table";
-import ECommerceOverviewStats from "./_component/overview-stats";
-import RegionLabels from "./_component/region-labels";
-import SalesChart from "./_component/sales-chart";
-import TopProducts from "./_component/top-products";
-import TrafficSources from "./_component/traffic-sources";
+"use client";
 
-export default function Home() {
+import { ActiveProjects } from "@/components/control-room/active-projects";
+import { KpiRow } from "@/components/control-room/kpi-row";
+import { LiveFeed } from "@/components/control-room/live-feed";
+import { NeedsAttention } from "@/components/control-room/needs-attention";
+import { useAuth } from "@/context/auth-context";
+import { useActivityStream } from "@/hooks/use-activity-stream";
+import { getControlRoom } from "@/services/dashboardService";
+import { queryKeys } from "@/lib/queryKeys";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+export default function ControlRoomPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const canView = user?.permissions.includes("project.view_all") ?? false;
+
+  useEffect(() => {
+    if (!isLoading && user && !canView) router.replace("/my-tasks");
+  }, [canView, isLoading, router, user]);
+
+  const dashboardQuery = useQuery({
+    queryKey: queryKeys.dashboard.controlRoom(),
+    queryFn: getControlRoom,
+    enabled: canView,
+    refetchInterval: 60000,
+  });
+
+  const { events, connected } = useActivityStream(canView);
+
+  if (isLoading || !canView) {
+    return (
+      <div className="animate-pulse space-y-4 px-4 pt-6 lg:px-6">
+        <div className="h-8 w-48 rounded bg-[var(--color-neutral-100)]" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-lg bg-[var(--color-neutral-100)]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const data = dashboardQuery.data;
+
   return (
-    <div className="mt-6 space-y-5">
-      {/* Header Section */}
-      <div className="px-2 lg:px-6">
-        <h1 className="mb-1 text-[28px] leading-8 font-medium text-text-primary">E-commerce</h1>
-        <p className="text-sm leading-5 text-text-tertiary">
-          Track sales, monitor orders, and analyze store performance.
-        </p>
+    <div className="space-y-5 px-4 pt-6 lg:px-6">
+      <div>
+        <h1 className="text-[28px] font-bold text-text-primary">Control Room</h1>
+        <p className="text-sm text-text-secondary">What is happening and what is stuck — live.</p>
       </div>
 
-      <div className="space-y-5 px-2 lg:px-5">
-        <ECommerceOverviewStats />
-        <SalesChart />
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-[519fr_558fr]">
-          <InventoryOverview />
-          <TopProducts />
+      {data ? <KpiRow kpis={data.kpis} /> : null}
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr_1fr]">
+        <div className="order-2 xl:order-1">
+          <NeedsAttention
+            blockers={data?.needs_attention.blockers ?? []}
+            sitesNotReady={data?.needs_attention.sites_not_ready ?? []}
+          />
         </div>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-[546fr_531fr]">
-          <TrafficSources />
-          <RegionLabels />
+        <div className="order-1 xl:order-2">
+          <LiveFeed events={events} connected={connected} />
         </div>
-        <LastTransactionsTable />
+        <div className="order-3 xl:order-3">
+          {data ? <ActiveProjects projects={data.active_projects} /> : null}
+        </div>
       </div>
     </div>
   );

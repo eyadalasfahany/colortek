@@ -21,7 +21,7 @@ use App\Http\Middleware\AuthenticateStream;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
-    Route::get('stream', StreamController::class)->middleware(AuthenticateStream::class);
+    Route::get('stream', [StreamController::class, '__invoke'])->middleware(AuthenticateStream::class);
 
     Route::post('auth/login', [AuthController::class, 'login']);
 
@@ -82,7 +82,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('dashboard/workshop', [DashboardController::class, 'workshop']);
         Route::get('dashboard/site', [DashboardController::class, 'site']);
         Route::get('dashboard/samples', [DashboardController::class, 'samples']);
-        Route::get('search', SearchController::class);
+        Route::get('search', [SearchController::class, '__invoke']);
 
         Route::get('enums/{name}', [EnumController::class, 'show']);
     });

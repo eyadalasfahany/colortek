@@ -88,7 +88,7 @@ final class SiteVisitController extends Controller
         return response()->json(['data' => SiteVisitResource::make($updated)]);
     }
 
-    public function measurements(SiteVisitMeasurementsRequest $request, int $id): JsonResponse
+    public function bulkMeasurements(SiteVisitMeasurementsRequest $request, int $id): JsonResponse
     {
         $visit = $this->siteVisitService->findOrFail($id);
         $this->authorize('update', $visit);
@@ -112,17 +112,16 @@ final class SiteVisitController extends Controller
         $visit = $this->siteVisitService->findOrFail($id);
         $this->authorize('submit', $visit);
 
-        $signedId = $request->validated('signed_attachment_id');
         $result = $this->siteVisitService->submit(
             $visit,
             $request->validated('answers'),
             $request->user(),
-            is_numeric($signedId) ? (int) $signedId : null,
+            $request->validated('attachment_ids') ?? [],
         );
 
         $meta = [];
         if ($result['humidity_warning'] === true) {
-            $meta['humidity_warning'] = true;
+            $meta['warnings'] = [['code' => 'humidity_exceeds_max', 'message' => __('Humidity exceeds configured maximum.')]];
         }
 
         return response()->json([

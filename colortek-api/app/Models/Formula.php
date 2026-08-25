@@ -16,6 +16,7 @@ final class Formula extends Model
 {
     /** @use HasFactory<FormulaFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -33,8 +34,23 @@ final class Formula extends Model
         ];
     }
 
-    public function sample(): BelongsTo { return $this->belongsTo(Sample::class); }
-    public function authorEmployee(): BelongsTo { return $this->belongsTo(Employee::class, 'author_employee_id'); }
-    public function registeredBy(): BelongsTo { return $this->belongsTo(User::class, 'registered_by_user_id'); }
-    public function attachments(): MorphMany { return $this->morphMany(Attachment::class, 'attachable'); }
+    public function sample(): BelongsTo
+    {
+        return $this->belongsTo(Sample::class);
+    }
+
+    public function authorEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'author_employee_id');
+    }
+
+    public function registeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by_user_id');
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
 }

@@ -7,7 +7,7 @@ import { ThreeDots } from "@/components/common/sidebar/icon";
 import { cn } from "@/utils/cn";
 import { LogoWithText } from "@/utils/icon";
 import React from "react";
-import { NotificationsButton } from "./notifications";
+import { NotificationsLive } from "./notifications-live";
 import SearchBar from "./searchbar";
 
 //  Main Header
@@ -64,7 +64,7 @@ export default function Header({ onMenuClick }: { onMenuClick?: () => void }) {
           {/* Right Side - Actions */}
           <div className="flex items-center gap-2.5">
             <ThemeToggle />
-            <NotificationsButton />
+            <NotificationsLive />
             <UserProfileButton />
           </div>
         </div>
@@ -83,7 +83,7 @@ function MobileInfoDrawer({ isOpen }: { isOpen: boolean }) {
       <div className="px-5 py-4 shadow-xs">
         <div className="flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-2.5">
-            <NotificationsButton />
+            <NotificationsLive />
             <ThemeToggle />
             <SearchBar />
           </div>
