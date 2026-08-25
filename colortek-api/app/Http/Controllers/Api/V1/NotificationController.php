@@ -6,30 +6,31 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
+use Illuminate\Http\Request;
 
 final class NotificationController extends Controller
 {
-    public function index($r)
+    public function index(Request $request)
     {
-        return NotificationResource::collection($r->user()->notifications()->latest()->paginate($r->integer('per_page', 20)))->response();
+        return NotificationResource::collection($request->user()->notifications()->latest()->paginate($request->integer('per_page', 20)))->response();
     }
 
-    public function unreadCount($r)
+    public function unreadCount(Request $request)
     {
-        return response()->json(['data' => ['count' => $r->user()->unreadNotifications()->count()]]);
+        return response()->json(['data' => ['count' => $request->user()->unreadNotifications()->count()]]);
     }
 
-    public function markRead($r, $id)
+    public function markRead(Request $request, $id)
     {
-        $n = $r->user()->notifications()->whereKey($id)->firstOrFail();
+        $n = $request->user()->notifications()->whereKey($id)->firstOrFail();
         $n->markAsRead();
 
         return response()->json(['data' => NotificationResource::make($n->fresh())]);
     }
 
-    public function markAllRead($r)
+    public function markAllRead(Request $request)
     {
-        $r->user()->unreadNotifications->markAsRead();
+        $request->user()->unreadNotifications->markAsRead();
 
         return response()->json(['data' => null]);
     }

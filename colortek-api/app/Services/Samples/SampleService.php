@@ -18,6 +18,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkflowTemplate;
 use App\Repositories\SampleRepository;
+use App\Services\Tasks\TaskService;
 use App\Services\Workflow\WorkflowEngine;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -151,9 +152,9 @@ final class SampleService
             ->first();
 
         if ($task !== null) {
-            app(\App\Services\Tasks\TaskService::class)->claim($task, $user);
-            app(\App\Services\Tasks\TaskService::class)->start($task->fresh(), $user);
-            app(\App\Services\Tasks\TaskService::class)->complete($task->fresh(), $user, $data, ['client_approval_form' => $attachmentIds['client_approval_form'] ?? $attachmentIds]);
+            app(TaskService::class)->claim($task, $user);
+            app(TaskService::class)->start($task->fresh(), $user);
+            app(TaskService::class)->complete($task->fresh(), $user, $data, ['client_approval_form' => $attachmentIds['client_approval_form'] ?? $attachmentIds]);
         }
 
         return $sample->fresh($this->detailRelations());

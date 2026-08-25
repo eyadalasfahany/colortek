@@ -16,11 +16,11 @@ final class SearchController extends Controller
 
     public function __invoke($r)
     {
-        $q = trim($r->string('q')->toString());
+        $q = trim($request->string('q')->toString());
         if ($q === '') {
             return response()->json(['data' => []]);
         }
-        $u = $r->user();
+        $u = $request->user();
         $pq = Project::where(fn ($b) => $b->where('reference', 'like', "%$q%")->orWhere('name', 'like', "%$q%"));
         $this->v->applyToProjects($pq, $u);
         $ids = (clone $pq)->pluck('id');

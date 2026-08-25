@@ -58,4 +58,9 @@ class User extends Authenticatable
             ->wherePivot('is_supervisor', true)
             ->exists();
     }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('super_admin');
+    }
 }
