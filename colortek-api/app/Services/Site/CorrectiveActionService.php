@@ -44,7 +44,7 @@ final class CorrectiveActionService
             $department = Department::query()->where('code', 'sales')->firstOrFail();
             $task = Task::create([
                 'reference' => sprintf('%s-CA%d', $visit->reference, $action->id),
-                'instance_id' => $readinessTask->instance_id,
+                'instance_id' => null,
                 'task_definition_id' => $definition->id,
                 'project_id' => $visit->project_id,
                 'subject_type' => $action->getMorphClass(),

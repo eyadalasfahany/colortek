@@ -48,11 +48,12 @@ final class SiteVisitTaskHandler
     private function handleSetReadiness(Task $task, array $fields): void
     {
         $visit = $this->visitFromTask($task);
-        $readiness = SiteReadiness::from((string) ($fields['readiness'] ?? SiteReadiness::NotReady->value));
+        $requested = SiteReadiness::from((string) ($fields['readiness'] ?? SiteReadiness::NotReady->value));
+        $readiness = $requested;
         if ($readiness === SiteReadiness::Ready && $this->siteVisitService->hasCriticalFailures($visit)) {
             $readiness = SiteReadiness::NotReady;
         }
-        if ($readiness === SiteReadiness::NotReady && empty($fields['summary'])) {
+        if ($requested === SiteReadiness::NotReady && empty($fields['summary'])) {
             throw TaskNotReadyToComplete::missingField('summary');
         }
 
