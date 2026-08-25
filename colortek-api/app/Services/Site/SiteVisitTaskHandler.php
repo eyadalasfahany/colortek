@@ -50,10 +50,11 @@ final class SiteVisitTaskHandler
         $visit = $this->visitFromTask($task);
         $requested = SiteReadiness::from((string) ($fields['readiness'] ?? SiteReadiness::NotReady->value));
         $readiness = $requested;
-        if ($readiness === SiteReadiness::Ready && $this->siteVisitService->hasCriticalFailures($visit)) {
+        $forcedNotReady = $readiness === SiteReadiness::Ready && $this->siteVisitService->hasCriticalFailures($visit);
+        if ($forcedNotReady) {
             $readiness = SiteReadiness::NotReady;
         }
-        if ($requested === SiteReadiness::NotReady && empty($fields['summary'])) {
+        if ($requested === SiteReadiness::NotReady && ! $forcedNotReady && empty($fields['summary'])) {
             throw TaskNotReadyToComplete::missingField('summary');
         }
 
