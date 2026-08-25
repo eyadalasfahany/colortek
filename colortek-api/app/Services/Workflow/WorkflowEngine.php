@@ -96,6 +96,14 @@ final class WorkflowEngine
                 continue;
             }
 
+            if (in_array($target->code, [
+                'reception_daily_journal',
+                'accounting_process_journal',
+                'reception_fix_journal',
+            ], true)) {
+                continue;
+            }
+
             $task = $this->createOrPromoteTarget($instance, $transition, $target, $completedTask);
             if ($task !== null) {
                 $created->push($task);

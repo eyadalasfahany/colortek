@@ -57,7 +57,7 @@ export async function startTask(id: number): Promise<TaskDetail> {
 
 export interface CompleteTaskPayload {
   fields?: Record<string, unknown>;
-  attachment_ids?: number[];
+  attachment_ids?: number[] | Record<string, number[]>;
 }
 
 export async function completeTask(

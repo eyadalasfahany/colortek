@@ -2,19 +2,27 @@
 
 declare(strict_types=1);
 
+use App\Enums\JournalStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\TaskStatus;
+use App\Exceptions\TaskNotReadyToComplete;
+use App\Jobs\OpenDailyJournal;
 use App\Models\Attachment;
+use App\Models\AuditLog;
 use App\Models\Journal;
 use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\WorkflowTemplate;
+use App\Services\Payments\JournalService;
+use App\Services\Payments\JournalWorkflowService;
 use App\Services\Payments\PaymentService;
 use App\Services\Tasks\TaskService;
+use Carbon\CarbonImmutable;
 use Database\Seeders\ReferenceSeeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
@@ -229,6 +237,153 @@ it('scenario 6: three payments reviewed on the same day share one journal', func
 
     expect(Journal::query()->whereDate('journal_date', today())->count())->toBe(1)
         ->and(Journal::query()->first()?->payments)->toHaveCount(3);
+});
+
+function reviewPaymentAccepted(Payment $payment, User $sales, User $reception): Journal
+{
+    $salesTask = Task::query()
+        ->where('subject_id', $payment->id)
+        ->whereHas('definition', fn ($q) => $q->where('code', 'sales_confirm_payment'))
+        ->firstOrFail();
+
+    $proof = Attachment::factory()->paymentProof()->create(['uploaded_by_user_id' => $sales->id]);
+
+    app(TaskService::class)->complete($salesTask->fresh(), $sales, salesConfirmFields((int) $payment->installment_number), [
+        'payment_proof' => [$proof->id],
+    ]);
+
+    $receptionTask = Task::query()
+        ->where('subject_id', $payment->id)
+        ->whereHas('definition', fn ($q) => $q->where('code', 'reception_review_payment'))
+        ->where('status', TaskStatus::Ready)
+        ->sole();
+
+    app(TaskService::class)->claim($receptionTask, $reception);
+    app(TaskService::class)->start($receptionTask->fresh(), $reception);
+    app(TaskService::class)->complete($receptionTask->fresh(), $reception, ['review_result' => 'accepted'], []);
+
+    return Journal::query()->whereDate('journal_date', today())->sole();
+}
+
+function submitDailyJournal(Journal $journal, User $reception): Task
+{
+    $journalTask = app(JournalWorkflowService::class)->ensureDailyJournalTask(
+        CarbonImmutable::parse($journal->journal_date->toDateString()),
+    );
+
+    app(TaskService::class)->claim($journalTask, $reception);
+    app(TaskService::class)->start($journalTask->fresh(), $reception);
+    app(TaskService::class)->complete($journalTask->fresh(), $reception, [], []);
+
+    return Task::query()
+        ->whereHas('definition', fn ($q) => $q->where('code', 'accounting_process_journal'))
+        ->where('subject_id', $journal->id)
+        ->sole();
+}
+
+it('scenario 7: a submitted journal is read-only', function (): void {
+    ['payment' => $payment, 'sales' => $sales] = startPaymentFlow();
+    $reception = User::factory()->inDepartment('reception')->create();
+
+    $journal = reviewPaymentAccepted($payment, $sales, $reception);
+    submitDailyJournal($journal, $reception);
+
+    expect($journal->fresh()->status)->toBe(JournalStatus::Submitted);
+
+    expect(fn () => app(JournalService::class)->attachPayment($journal->fresh(), $payment->fresh()))
+        ->toThrow(TaskNotReadyToComplete::class);
+});
+
+it('scenario 8: changing a payment amount after journal submission does not change the journal total', function (): void {
+    ['payment' => $payment, 'sales' => $sales] = startPaymentFlow();
+    $reception = User::factory()->inDepartment('reception')->create();
+
+    $journal = reviewPaymentAccepted($payment, $sales, $reception);
+    submitDailyJournal($journal, $reception);
+
+    $totalBefore = $journal->fresh()->total_amount;
+    $payment->update(['amount' => 99999]);
+
+    $snapshot = DB::table('journal_payment')
+        ->where('journal_id', $journal->id)
+        ->where('payment_id', $payment->id)
+        ->value('amount_snapshot');
+
+    expect($journal->fresh()->total_amount)->toBe($totalBefore)
+        ->and((string) $snapshot)->not->toBe('99999.00');
+});
+
+it('scenario 9: accounting query reopens the journal, creates a reception task, and writes an audit row', function (): void {
+    ['payment' => $payment, 'sales' => $sales] = startPaymentFlow();
+    $reception = User::factory()->inDepartment('reception')->create();
+    $accounting = User::factory()->inDepartment('accounting')->create();
+
+    $journal = reviewPaymentAccepted($payment, $sales, $reception);
+    $accountingTask = submitDailyJournal($journal, $reception);
+
+    app(TaskService::class)->claim($accountingTask, $accounting);
+    app(TaskService::class)->start($accountingTask->fresh(), $accounting);
+    app(TaskService::class)->complete($accountingTask->fresh(), $accounting, [
+        'accounting_result' => 'query',
+        'note' => 'Totals do not match',
+    ], []);
+
+    expect($journal->fresh()->status)->toBe(JournalStatus::Open)
+        ->and(Task::query()->whereHas('definition', fn ($q) => $q->where('code', 'reception_fix_journal'))->exists())->toBeTrue()
+        ->and(AuditLog::query()
+            ->where('auditable_type', $journal->getMorphClass())
+            ->where('auditable_id', $journal->id)
+            ->where('event', 'reopened')
+            ->exists())->toBeTrue();
+});
+
+it('scenario 10: installment 2 runs a second independent instance while installment 1 is still open', function (): void {
+    $project = Project::factory()->create();
+    $sales = User::factory()->inDepartment('sales')->create();
+
+    $first = app(PaymentService::class)->startForProject($project, 1, $sales);
+    $second = app(PaymentService::class)->startForProject($project, 2, $sales);
+
+    expect($first['payment']->id)->not->toBe($second['payment']->id)
+        ->and($first['task']->instance_id)->not->toBe($second['task']->instance_id)
+        ->and($first['task']->status)->toBe(TaskStatus::Ready)
+        ->and($second['task']->status)->toBe(TaskStatus::Ready);
+});
+
+it('scenario 11: a day with no payments does not leave a stuck open task', function (): void {
+    $yesterday = CarbonImmutable::yesterday();
+
+    app(JournalWorkflowService::class)->ensureDailyJournalTask($yesterday);
+
+    $journal = Journal::query()->whereDate('journal_date', $yesterday)->sole();
+    $openTask = Task::query()
+        ->where('subject_id', $journal->id)
+        ->whereHas('definition', fn ($q) => $q->where('code', 'reception_daily_journal'))
+        ->whereNot('status', TaskStatus::Completed)
+        ->sole();
+
+    expect($openTask->status)->toBe(TaskStatus::Ready);
+
+    app(JournalWorkflowService::class)->autoCloseEmptyJournalForDate($yesterday);
+
+    expect($journal->fresh()->status)->toBe(JournalStatus::Submitted)
+        ->and($journal->fresh()->total_amount)->toBe('0.00')
+        ->and($openTask->fresh()->status)->toBe(TaskStatus::Completed);
+});
+
+it('open daily journal job creates todays journal task and closes empty yesterday', function (): void {
+    $yesterday = CarbonImmutable::yesterday();
+    app(JournalWorkflowService::class)->ensureDailyJournalTask($yesterday);
+
+    (new OpenDailyJournal)->handle(app(JournalWorkflowService::class));
+
+    expect(Journal::query()->whereDate('journal_date', today())->exists())->toBeTrue()
+        ->and(Task::query()
+            ->whereHas('definition', fn ($q) => $q->where('code', 'reception_daily_journal'))
+            ->whereDate('created_at', today())
+            ->exists())->toBeTrue()
+        ->and(Journal::query()->whereDate('journal_date', $yesterday)->first()?->status)
+        ->toBe(JournalStatus::Submitted);
 });
 
 it('starts a payment via HTTP and exposes form_schema on the sales task', function (): void {

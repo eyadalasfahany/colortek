@@ -144,6 +144,7 @@ final class TaskService
             ]);
 
             $createdTasks = $this->workflowEngine->advance($completed);
+            $this->paymentTaskHandler->handleAfterComplete($completed, $user, $fields);
         });
 
         DB::afterCommit(fn () => event(new TaskCompleted($completed->fresh(), $user, $createdTasks)));

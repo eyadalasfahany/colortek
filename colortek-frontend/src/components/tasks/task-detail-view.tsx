@@ -10,6 +10,7 @@ import { Label } from "@/components/tailgrids/core/label";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import { TextArea } from "@/components/tailgrids/core/text-area";
 import { queryKeys } from "@/lib/queryKeys";
+import { uploadAttachment, type UploadedAttachment } from "@/services/attachmentService";
 import {
   claimTask,
   completeTask,
@@ -39,6 +40,10 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [uploadedAttachments, setUploadedAttachments] = useState<
+    Record<string, UploadedAttachment[]>
+  >({});
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [handoverMessage, setHandoverMessage] = useState<string | null>(null);
 
@@ -65,8 +70,15 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   });
 
   const completeMutation = useMutation({
-    mutationFn: ({ id, fields }: { id: number; fields: Record<string, unknown> }) =>
-      completeTask(id, { fields }),
+    mutationFn: ({
+      id,
+      fields,
+      attachmentIds,
+    }: {
+      id: number;
+      fields: Record<string, unknown>;
+      attachmentIds?: Record<string, number[]>;
+    }) => completeTask(id, { fields, attachment_ids: attachmentIds }),
     onSuccess: (response) => {
       const message = buildHandoverMessage(response.meta.created_tasks);
       setHandoverMessage(message);
@@ -94,13 +106,14 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
           label: "Complete",
           action: () => {
             const fields = buildFieldsPayload(task.form_schema?.fields ?? [], formValues);
-            completeMutation.mutate({ id: task.id, fields });
+            const attachmentIds = buildAttachmentIds(task.required_attachment_types ?? [], uploadedAttachments);
+            completeMutation.mutate({ id: task.id, fields, attachmentIds });
           },
         };
       default:
         return null;
     }
-  }, [claimMutation, completeMutation, formValues, startMutation, task]);
+  }, [claimMutation, completeMutation, formValues, startMutation, task, uploadedAttachments]);
 
   if (taskQuery.isLoading) {
     return <TaskDetailSkeleton />;
@@ -122,6 +135,23 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   }
 
   const priority = priorityLabel(task.priority);
+
+  async function handleAttachmentUpload(type: string, file: File) {
+    setActionError(null);
+    setUploadingType(type);
+
+    try {
+      const attachment = await uploadAttachment(file, type);
+      setUploadedAttachments((current) => ({
+        ...current,
+        [type]: [...(current[type] ?? []), attachment],
+      }));
+    } catch (error) {
+      setActionError(getErrorMessage(error));
+    } finally {
+      setUploadingType(null);
+    }
+  }
 
   return (
     <div className="px-4 pt-6 lg:px-6">
@@ -244,16 +274,55 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       {task.required_attachment_types && task.required_attachment_types.length > 0 ? (
         <Card className="mb-4">
           <CardTitle className="mb-4 text-lg">Files</CardTitle>
-          <ul className="space-y-2">
-            {task.required_attachment_types.map((type) => (
-              <li
-                key={type}
-                className="flex items-center justify-between rounded-lg border border-card-border px-3 py-2 text-sm"
-              >
-                <span className="text-text-primary">{formatAttachmentType(type)}</span>
-                <span className="text-error-500">Required</span>
-              </li>
-            ))}
+          <ul className="space-y-3">
+            {task.required_attachment_types.map((type) => {
+              const uploads = uploadedAttachments[type] ?? [];
+              const isUploading = uploadingType === type;
+
+              return (
+                <li
+                  key={type}
+                  className="rounded-lg border border-card-border px-3 py-3 text-sm"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-text-primary">{formatAttachmentType(type)}</span>
+                    <span className={uploads.length > 0 ? "text-success-500" : "text-error-500"}>
+                      {uploads.length > 0 ? "Uploaded" : "Required"}
+                    </span>
+                  </div>
+
+                  {uploads.length > 0 ? (
+                    <ul className="mt-2 space-y-1 text-text-secondary">
+                      {uploads.map((attachment) => (
+                        <li key={attachment.id}>{attachment.filename}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {task.status === "in_progress" ? (
+                    <div className="mt-3">
+                      <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-brand-500 hover:text-brand-600">
+                        <input
+                          type="file"
+                          className="hidden"
+                          disabled={isUploading || isActionPending}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) {
+                              return;
+                            }
+
+                            void handleAttachmentUpload(type, file);
+                            event.target.value = "";
+                          }}
+                        />
+                        {isUploading ? "Uploading…" : "Choose file"}
+                      </label>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </Card>
       ) : null}
@@ -342,6 +411,22 @@ function TaskDetailSkeleton() {
       </Card>
     </div>
   );
+}
+
+function buildAttachmentIds(
+  requiredTypes: string[],
+  uploads: Record<string, UploadedAttachment[]>,
+): Record<string, number[]> | undefined {
+  const attachmentIds: Record<string, number[]> = {};
+
+  for (const type of requiredTypes) {
+    const ids = (uploads[type] ?? []).map((attachment) => attachment.id);
+    if (ids.length > 0) {
+      attachmentIds[type] = ids;
+    }
+  }
+
+  return Object.keys(attachmentIds).length > 0 ? attachmentIds : undefined;
 }
 
 function buildFieldsPayload(

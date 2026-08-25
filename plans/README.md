@@ -5,8 +5,8 @@ testable software on its own. Build them in order.
 
 | # | Plan | Produces | Status |
 |---|---|---|---|
-| 1 | [2026-08-22-phase1-spine.md](2026-08-22-phase1-spine.md) | Laravel API with auth, the working calendar, the task lifecycle and the workflow engine. An end-to-end test proves a completed task creates its successor in the right queue | **ready** |
-| 2 | Payment flow vertical slice | The payment → journal → accounting workflow, plus Queue, My Tasks and Task Detail in Next.js. The first thing anyone can watch working | not written |
+| 1 | [2026-08-22-phase1-spine.md](2026-08-22-phase1-spine.md) | Laravel API with auth, the working calendar, the task lifecycle and the workflow engine. An end-to-end test proves a completed task creates its successor in the right queue | **done** |
+| 2 | [2026-08-25-phase2-payment-flow.md](2026-08-25-phase2-payment-flow.md) | The payment → journal → accounting workflow, plus Queue, My Tasks and Task Detail in Next.js. The first thing anyone can watch working | **done** |
 | 3 | Samples and formula | Sample request, manager approval, workshop, parallel tinting branch, formula registration, printed client approval form, sample chain UI | not written |
 | 4 | Site visit and readiness | The measurement sheet, the condition statement, readiness blocking, corrective actions, re-inspection, offline drafts | not written |
 | 5 | Live layer | Activity stream, SSE, notifications, control room, project detail, dashboards | not written |

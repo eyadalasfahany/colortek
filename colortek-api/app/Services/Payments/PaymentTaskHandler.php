@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Payments;
 
 use App\Enums\ActivitySeverity;
+use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
 use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Attachment;
+use App\Models\Journal;
 use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Task;
@@ -23,6 +25,7 @@ final class PaymentTaskHandler
 {
     public function __construct(
         private JournalService $journalService,
+        private JournalWorkflowService $journalWorkflowService,
         private ActivityRecorder $activityRecorder,
     ) {}
 
@@ -42,6 +45,26 @@ final class PaymentTaskHandler
         match ($code) {
             'sales_confirm_payment' => $this->handleSalesConfirm($task, $user, $fields, $attachmentIds),
             'reception_review_payment' => $this->handleReceptionReview($task, $user, $fields),
+            'reception_daily_journal' => $this->handleJournalSubmit($task, $user, $fields),
+            'accounting_process_journal' => $this->handleAccountingProcess($task, $user, $fields),
+            'reception_fix_journal' => $this->handleJournalFix($task, $user, $fields),
+            default => null,
+        };
+    }
+
+    /** @param array<string, mixed> $fields */
+    public function handleAfterComplete(Task $task, User $user, array $fields): void
+    {
+        $task->loadMissing(['definition', 'subject']);
+        $code = $task->definition?->code;
+
+        match ($code) {
+            'reception_daily_journal' => $this->journalWorkflowService->ensureAccountingTask(
+                $this->journalFromTask($task),
+            ),
+            'reception_fix_journal' => $this->journalWorkflowService->ensureAccountingTask(
+                $this->journalFromTask($task),
+            ),
             default => null,
         };
     }
@@ -141,6 +164,65 @@ final class PaymentTaskHandler
 
             $this->journalService->attachPayment($journal, $payment->fresh());
         });
+
+        $this->journalWorkflowService->ensureDailyJournalTask(CarbonImmutable::today());
+    }
+
+    /** @param array<string, mixed> $fields */
+    private function handleJournalSubmit(Task $task, User $user, array $fields): void
+    {
+        $this->journalService->submit($this->journalFromTask($task), $user, $fields);
+    }
+
+    /** @param array<string, mixed> $fields */
+    private function handleAccountingProcess(Task $task, User $user, array $fields): void
+    {
+        if (($fields['accounting_result'] ?? '') === 'query' && empty($fields['note'])) {
+            throw TaskNotReadyToComplete::missingField('note');
+        }
+
+        if (($fields['accounting_result'] ?? '') !== 'processed') {
+            $journal = $this->journalFromTask($task);
+            $this->journalService->reopen($journal, $user, (string) ($fields['note'] ?? ''));
+            $this->journalWorkflowService->createFixJournalTask($journal, (string) ($fields['note'] ?? ''));
+
+            return;
+        }
+
+        $this->journalService->markAccounted($this->journalFromTask($task), $user, $fields);
+    }
+
+    /** @param array<string, mixed> $fields */
+    private function handleJournalFix(Task $task, User $user, array $fields): void
+    {
+        if (empty($fields['fix_note'])) {
+            throw TaskNotReadyToComplete::missingField('fix_note');
+        }
+
+        $journal = $this->journalFromTask($task);
+        if ($journal->status !== JournalStatus::Open) {
+            throw new TaskNotReadyToComplete(
+                __('The journal must be open before it can be resubmitted.'),
+                'journal.not_open',
+            );
+        }
+
+        $this->journalService->submit($journal, $user, [
+            'notes' => $fields['fix_note'],
+        ]);
+    }
+
+    private function journalFromTask(Task $task): Journal
+    {
+        $subject = $task->subject;
+        if ($subject instanceof Journal) {
+            return $subject;
+        }
+
+        throw new TaskNotReadyToComplete(
+            __('Journal record not found for this task.'),
+            'journal.not_found',
+        );
     }
 
     private function lockQuotation(Project $project, User $user): void
