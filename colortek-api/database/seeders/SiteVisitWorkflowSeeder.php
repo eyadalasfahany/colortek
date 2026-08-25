@@ -1,12 +1,15 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Database\Seeders;
+
 use App\Models\Department;
 use App\Models\WorkflowTaskDefinition;
 use App\Models\WorkflowTemplate;
 use App\Models\WorkflowTransition;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Collection;
+
 final class SiteVisitWorkflowSeeder extends Seeder
 {
     public function run(): void

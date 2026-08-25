@@ -10,11 +10,9 @@ use App\Http\Requests\PatchFormulaRequest;
 use App\Http\Requests\RegisterFormulaRequest;
 use App\Http\Resources\FormulaResource;
 use App\Models\Formula;
-use App\Models\Sample;
 use App\Services\Samples\FormulaService;
 use App\Services\Samples\SampleService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class FormulaController extends Controller
 {

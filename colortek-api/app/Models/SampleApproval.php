@@ -31,5 +31,8 @@ final class SampleApproval extends Model
         ];
     }
 
-    public function sample(): BelongsTo { return $this->belongsTo(Sample::class); }
+    public function sample(): BelongsTo
+    {
+        return $this->belongsTo(Sample::class);
+    }
 }

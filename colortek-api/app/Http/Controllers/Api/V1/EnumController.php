@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\CorrectiveActionStatus;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Enums\CorrectiveActionStatus;
 use App\Enums\ProjectStage;
+use App\Enums\QuotationStatus;
 use App\Enums\ResponsibleParty;
 use App\Enums\SiteReadiness;
-use App\Enums\QuotationStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BlockerCategory;
+use BackedEnum;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -84,7 +85,7 @@ final class EnumController extends Controller
     }
 
     /**
-     * @param  array<int, PaymentMethod|PaymentStatus|JournalStatus|ProjectStage|QuotationStatus>  $cases
+     * @param  array<int, BackedEnum>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 use App\Enums\FormulaStatus;
 use App\Enums\SampleStatus;
-use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Attachment;
-use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\Formula;
@@ -139,7 +138,7 @@ it('scenario 5: workshop cannot complete before formula authored', function (): 
 
     expect(fn () => app(TaskService::class)->complete($workshopTask->fresh(), $workshop, [
         'ready_for_registration' => true,
-    ], ['sample_photo' => [$photoId]]))->toThrow(App\Exceptions\TaskNotReadyToComplete::class);
+    ], ['sample_photo' => [$photoId]]))->toThrow(TaskNotReadyToComplete::class);
 });
 
 it('scenario 6: workshop timer stops on completion', function (): void {
@@ -185,7 +184,7 @@ it('scenario 7: client decision blocked without signed form', function (): void 
         'decision' => 'approved',
         'client_signatory_name' => 'Client Name',
         'decided_at' => '2026-08-20',
-    ], []))->toThrow(App\Exceptions\TaskNotReadyToComplete::class);
+    ], []))->toThrow(TaskNotReadyToComplete::class);
 });
 
 it('scenario 8: decided_at stored separately from upload time', function (): void {

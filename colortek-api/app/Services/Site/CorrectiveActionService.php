@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Site;
 
-use App\Enums\ChecklistAnswerType;
 use App\Enums\CorrectiveActionStatus;
 use App\Enums\ResponsibleParty;
 use App\Enums\TaskStatus;
 use App\Models\CorrectiveAction;
 use App\Models\Department;
-use App\Models\SiteChecklistItem;
 use App\Models\SiteVisit;
-use App\Models\SiteVisitAnswer;
 use App\Models\Task;
-use App\Models\User;
 use App\Models\WorkflowTaskDefinition;
 
 final class CorrectiveActionService

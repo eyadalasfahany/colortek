@@ -17,6 +17,7 @@ final class Sample extends Model
 {
     /** @use HasFactory<SampleFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     protected $fillable = [
@@ -36,12 +37,43 @@ final class Sample extends Model
         ];
     }
 
-    public function client(): BelongsTo { return $this->belongsTo(Client::class); }
-    public function project(): BelongsTo { return $this->belongsTo(Project::class); }
-    public function parentSample(): BelongsTo { return $this->belongsTo(Sample::class, 'parent_sample_id'); }
-    public function approvedFormula(): BelongsTo { return $this->belongsTo(Formula::class, 'approved_formula_id'); }
-    public function formulas(): HasMany { return $this->hasMany(Formula::class); }
-    public function approvals(): HasMany { return $this->hasMany(SampleApproval::class); }
-    public function attachments(): MorphMany { return $this->morphMany(Attachment::class, 'attachable'); }
-    public function workflowInstances(): MorphMany { return $this->morphMany(WorkflowInstance::class, 'subject'); }
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function parentSample(): BelongsTo
+    {
+        return $this->belongsTo(Sample::class, 'parent_sample_id');
+    }
+
+    public function approvedFormula(): BelongsTo
+    {
+        return $this->belongsTo(Formula::class, 'approved_formula_id');
+    }
+
+    public function formulas(): HasMany
+    {
+        return $this->hasMany(Formula::class);
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(SampleApproval::class);
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function workflowInstances(): MorphMany
+    {
+        return $this->morphMany(WorkflowInstance::class, 'subject');
+    }
 }

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Payments;
 
+use App\Enums\ActivitySeverity;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
-use App\Events\PaymentConfirmed;
 use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Attachment;
 use App\Models\Journal;
@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Activity\ActivityRecorder;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +26,7 @@ final class PaymentTaskHandler
     public function __construct(
         private JournalService $journalService,
         private JournalWorkflowService $journalWorkflowService,
-
+        private ActivityRecorder $activityRecorder,
     ) {}
 
     /**
@@ -123,7 +124,16 @@ final class PaymentTaskHandler
             $this->linkAttachments($proofIds, $payment);
         });
 
-        DB::afterCommit(fn () => event(new PaymentConfirmed($payment->fresh(), $user)));
+        $this->activityRecorder->record(
+            type: 'payment.confirmed',
+            severity: ActivitySeverity::Success,
+            messageEn: sprintf('Payment of %s EGP confirmed for %s.', $fields['amount'], $project->reference),
+            messageAr: sprintf('تم تأكيد دفعة %s جنيه للمشروع %s.', $fields['amount'], $project->reference),
+            actor: $user,
+            project: $project,
+            subject: $payment->fresh(),
+            department: $task->department,
+        );
     }
 
     /** @param array<string, mixed> $fields */
@@ -131,6 +141,32 @@ final class PaymentTaskHandler
     {
         if (($fields['review_result'] ?? '') === 'query' && empty($fields['review_note'])) {
             throw TaskNotReadyToComplete::missingField('review_note');
+        }
+
+        if (($fields['review_result'] ?? '') === 'query') {
+            /** @var Payment|null $payment */
+            $payment = $task->subject instanceof Payment ? $task->subject : null;
+            $project = $payment?->project ?? $task->project;
+
+            $this->activityRecorder->record(
+                type: 'payment.queried',
+                severity: ActivitySeverity::Warning,
+                messageEn: sprintf(
+                    'Payment sent back to Sales for %s.',
+                    $project?->reference ?? 'project',
+                ),
+                messageAr: sprintf(
+                    'تم إرجاع الدفعة إلى المبيعات للمشروع %s.',
+                    $project?->reference ?? 'project',
+                ),
+                actor: $user,
+                project: $project,
+                subject: $payment,
+                department: $task->department,
+                payload: ['review_note' => $fields['review_note'] ?? null],
+            );
+
+            return;
         }
 
         if (($fields['review_result'] ?? '') !== 'accepted') {

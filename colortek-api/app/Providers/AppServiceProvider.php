@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\Attachment;
+use App\Models\CorrectiveAction;
 use App\Models\Journal;
 use App\Models\Payment;
-use App\Models\CorrectiveAction;
 use App\Models\SiteVisit;
 use App\Models\Task;
 use App\Policies\AttachmentPolicy;
+use App\Policies\CorrectiveActionPolicy;
 use App\Policies\JournalPolicy;
 use App\Policies\PaymentPolicy;
-use App\Policies\CorrectiveActionPolicy;
 use App\Policies\SiteVisitPolicy;
 use App\Policies\TaskPolicy;
 use App\Services\Time\WorkingCalendar;

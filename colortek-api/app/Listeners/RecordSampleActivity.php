@@ -1,1 +1,7 @@
-<?php declare(strict_types=1); namespace App\Listeners; final class RecordSampleActivity {}
+<?php
+
+declare(strict_types=1);
+
+namespace App\Listeners;
+
+final class RecordSampleActivity {}

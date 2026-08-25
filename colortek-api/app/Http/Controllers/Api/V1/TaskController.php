@@ -148,7 +148,13 @@ final class TaskController extends Controller
         ]);
     }
 
-    public function overrideSiteBlock(SiteBlockOverrideRequest $request, int $id): JsonResponse { $task=$this->findTaskOrFail($id); $this->authorize('complete',$task); return response()->json(['data'=>TaskResource::make($this->taskService->overrideSiteBlock($task,$request->user(),$request->validated('reason'))->load(['department','project','definition']))]); }
+    public function overrideSiteBlock(SiteBlockOverrideRequest $request, int $id): JsonResponse
+    {
+        $task = $this->findTaskOrFail($id);
+        $this->authorize('complete', $task);
+
+        return response()->json(['data' => TaskResource::make($this->taskService->overrideSiteBlock($task, $request->user(), $request->validated('reason'))->load(['department', 'project', 'definition']))]);
+    }
 
     public function attach(Request $request, int $id): JsonResponse
     {
