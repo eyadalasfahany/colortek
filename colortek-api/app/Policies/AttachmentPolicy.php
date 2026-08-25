@@ -18,4 +18,9 @@ final class AttachmentPolicy
     {
         return $user->can('payment.view') || $user->can('task.view_own_queue');
     }
+
+    public function delete(User $user, Attachment $attachment): bool
+    {
+        return $user->can('task.complete') || $user->can('payment.confirm');
+    }
 }

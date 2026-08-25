@@ -27,7 +27,7 @@ final class RecordPaymentActivity
 
     public function handleJournalSubmitted(JournalSubmitted $e): void
     {
-        $this->s(fn () => $this->r->record('journal.submitted', ActivitySeverity::Info, 'Journal submitted', 'تم تقديم اليومية', actor: $e->user, subject: $e->journal));
+        $this->s(fn () => $this->r->record('journal.submitted', ActivitySeverity::Success, 'Journal submitted', 'تم تقديم اليومية', actor: $e->user, subject: $e->journal));
     }
 
     public function handleJournalReopened(JournalReopened $e): void

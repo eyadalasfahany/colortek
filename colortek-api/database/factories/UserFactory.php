@@ -58,6 +58,10 @@ class UserFactory extends Factory
                 'reception' => 'reception',
                 'accounting' => 'accounting',
                 'site' => 'site_engineer',
+                'workshop' => 'workshop_supervisor',
+                'management' => 'management',
+                'tinting' => 'tinting',
+                'admin' => 'admin',
                 default => 'sales',
             });
         });

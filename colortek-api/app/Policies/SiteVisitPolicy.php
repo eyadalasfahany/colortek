@@ -33,4 +33,9 @@ final class SiteVisitPolicy
     {
         return $u->can('site.visit_submit');
     }
+
+    public function setReadiness(User $u, SiteVisit $v): bool
+    {
+        return $u->can('site.set_readiness');
+    }
 }

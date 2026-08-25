@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\AttachmentType;
 use App\Enums\CorrectiveActionStatus;
+use App\Enums\FormulaStatus;
 use App\Enums\JournalStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
+use App\Enums\ProjectStatus;
 use App\Enums\QuotationStatus;
 use App\Enums\ResponsibleParty;
+use App\Enums\SampleApprovalDecision;
+use App\Enums\SampleApprovalType;
+use App\Enums\SampleStatus;
 use App\Enums\SiteReadiness;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Enums\TimeEntrySource;
 use App\Http\Controllers\Controller;
 use App\Models\BlockerCategory;
 use Illuminate\Http\JsonResponse;
@@ -31,7 +38,14 @@ final class EnumController extends Controller
             'payment_status' => $this->labeledEnumCases(PaymentStatus::cases()),
             'journal_status' => $this->labeledEnumCases(JournalStatus::cases()),
             'project_stage' => $this->labeledEnumCases(ProjectStage::cases()),
+            'project_status' => $this->labeledEnumCases(ProjectStatus::cases()),
             'quotation_status' => $this->labeledEnumCases(QuotationStatus::cases()),
+            'sample_status' => $this->labeledEnumCases(SampleStatus::cases()),
+            'formula_status' => $this->labeledEnumCases(FormulaStatus::cases()),
+            'approval_type' => $this->labeledEnumCases(SampleApprovalType::cases()),
+            'approval_decision' => $this->labeledEnumCases(SampleApprovalDecision::cases()),
+            'attachment_type' => $this->labeledEnumCases(AttachmentType::cases()),
+            'time_entry_source' => $this->labeledEnumCases(TimeEntrySource::cases()),
             'site_readiness' => $this->labeledEnumCases(SiteReadiness::cases()),
             'corrective_action_status' => $this->labeledEnumCases(CorrectiveActionStatus::cases()),
             'responsible_party' => $this->labeledEnumCases(ResponsibleParty::cases()),
@@ -84,7 +98,7 @@ final class EnumController extends Controller
     }
 
     /**
-     * @param  array<int, CorrectiveActionStatus|JournalStatus|PaymentMethod|PaymentStatus|ProjectStage|QuotationStatus|ResponsibleParty|SiteReadiness>  $cases
+     * @param  array<int, CorrectiveActionStatus|FormulaStatus|JournalStatus|PaymentMethod|PaymentStatus|ProjectStage|ProjectStatus|QuotationStatus|ResponsibleParty|SampleApprovalDecision|SampleApprovalType|SampleStatus|SiteReadiness|AttachmentType|TimeEntrySource>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function labeledEnumCases(array $cases): array

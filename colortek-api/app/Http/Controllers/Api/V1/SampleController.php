@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Concerns\LoadsRequestedRelations;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ClientDecisionRequest;
 use App\Http\Requests\ModificationRequest;
@@ -23,6 +24,8 @@ use Illuminate\Http\Response;
 
 final class SampleController extends Controller
 {
+    use LoadsRequestedRelations;
+
     public function __construct(
         private SampleService $sampleService,
         private ApprovalFormGenerator $approvalFormGenerator,
@@ -55,10 +58,12 @@ final class SampleController extends Controller
         ], 201);
     }
 
-    public function show(string $identifier): JsonResponse
+    public function show(Request $request, string $identifier): JsonResponse
     {
-        $sample = $this->sampleService->findOrFail($identifier, $this->sampleService->detailRelations());
+        $relations = $this->sampleService->detailRelations();
+        $sample = $this->sampleService->findOrFail($identifier, $relations);
         $this->authorize('view', $sample);
+        $this->loadRequestedRelations($request, $sample, $relations);
 
         return response()->json([
             'data' => SampleResource::make($sample),

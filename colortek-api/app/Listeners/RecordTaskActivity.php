@@ -10,6 +10,7 @@ use App\Events\TaskClaimed;
 use App\Events\TaskCompleted;
 use App\Events\TaskCreated;
 use App\Events\TaskOverdue;
+use App\Events\TaskReassigned;
 use App\Events\TaskStarted;
 use App\Events\TaskUnblocked;
 use App\Services\Activity\ActivityRecorder;
@@ -40,17 +41,45 @@ final class RecordTaskActivity
 
     public function handleTaskStarted(TaskStarted $event): void
     {
-        $this->safely(fn () => $this->recorder->record('started', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
+        $this->safely(fn () => $this->recorder->record(
+            type: 'task.started',
+            severity: ActivitySeverity::Info,
+            messageEn: __('Task started.'),
+            messageAr: __('Task started.'),
+            actor: $event->user,
+            project: $event->task->project,
+            subject: $event->task,
+        ));
     }
 
     public function handleTaskUnblocked(TaskUnblocked $event): void
     {
-        $this->safely(fn () => $this->recorder->record('unblocked', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
+        $this->safely(fn () => $this->recorder->record(
+            type: 'task.unblocked',
+            severity: ActivitySeverity::Success,
+            messageEn: __('Task unblocked.'),
+            messageAr: __('Task unblocked.'),
+            actor: $event->user,
+            project: $event->task->project,
+            subject: $event->task,
+        ));
     }
 
     public function handleTaskOverdue(TaskOverdue $event): void
     {
-        $this->safely(fn () => $this->recorder->record('overdue', ActivitySeverity::Info, 'event', 'حدث', project: $event->task->project, subject: $event->task));
+        $this->safely(fn () => $this->recorder->record(
+            type: 'task.overdue',
+            severity: ActivitySeverity::Warning,
+            messageEn: __('Task overdue.'),
+            messageAr: __('Task overdue.'),
+            project: $event->task->project,
+            subject: $event->task,
+        ));
+    }
+
+    public function handleTaskReassigned(TaskReassigned $event): void
+    {
+        $this->safely(fn () => $this->recordReassigned($event));
     }
 
     private function safely(callable $callback): void
@@ -143,6 +172,28 @@ final class RecordTaskActivity
                 'title' => $task->localizedTitle('ar'),
             ], 'ar'),
             actor: $event->user,
+            project: $task->project,
+            subject: $task,
+            department: $task->department,
+        );
+    }
+
+    private function recordReassigned(TaskReassigned $event): void
+    {
+        $task = $event->task->loadMissing(['department', 'project']);
+
+        $this->recorder->record(
+            type: 'task.reassigned',
+            severity: ActivitySeverity::Warning,
+            messageEn: __(':user reassigned :title.', [
+                'user' => $event->actor->name,
+                'title' => $task->localizedTitle('en'),
+            ], 'en'),
+            messageAr: __(':user reassigned :title.', [
+                'user' => $event->actor->name,
+                'title' => $task->localizedTitle('ar'),
+            ], 'ar'),
+            actor: $event->actor,
             project: $task->project,
             subject: $task,
             department: $task->department,

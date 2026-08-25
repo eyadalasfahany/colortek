@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SiteReadinessRequest;
 use App\Http\Requests\SiteVisitDraftRequest;
 use App\Http\Requests\SiteVisitMeasurementsRequest;
 use App\Http\Requests\SiteVisitSubmitRequest;
@@ -13,6 +14,7 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\SiteVisit;
 use App\Services\Site\SiteMeasurementService;
+use App\Services\Site\SiteReadinessService;
 use App\Services\Site\SiteVisitPdfGenerator;
 use App\Services\Site\SiteVisitService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -26,6 +28,7 @@ final class SiteVisitController extends Controller
         private SiteVisitService $siteVisitService,
         private SiteMeasurementService $measurementService,
         private SiteVisitPdfGenerator $pdfGenerator,
+        private SiteReadinessService $readinessService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -129,6 +132,16 @@ final class SiteVisitController extends Controller
             'data' => SiteVisitResource::make($result['visit']),
             'meta' => $meta,
         ]);
+    }
+
+    public function readiness(SiteReadinessRequest $request, int $id): JsonResponse
+    {
+        $visit = $this->siteVisitService->findOrFail($id, ['project', 'answers.checklistItem']);
+        $this->authorize('setReadiness', $visit);
+
+        $updated = $this->readinessService->apply($visit, $request->user(), $request->validated());
+
+        return response()->json(['data' => SiteVisitResource::make($updated)]);
     }
 
     public function pdf(int $id): Response

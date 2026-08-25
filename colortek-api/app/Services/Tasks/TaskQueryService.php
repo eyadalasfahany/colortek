@@ -30,6 +30,6 @@ final class TaskQueryService
 
     public function findForUser(int $id, User $user): Task
     {
-        return $this->tasks->findForUser($id, $user, ['department', 'claimant', 'project', 'definition']);
+        return $this->tasks->findForUser($id, $user, ['department', 'claimant', 'project', 'definition', 'subject']);
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Attachment;
 use App\Services\Attachments\AttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class AttachmentController extends Controller
@@ -39,5 +40,14 @@ final class AttachmentController extends Controller
         $this->authorize('view', $attachment);
 
         return $this->attachmentService->stream($attachment);
+    }
+
+    public function destroy(int $id): Response
+    {
+        $attachment = $this->attachmentService->findOrFail($id);
+        $this->authorize('delete', $attachment);
+        $this->attachmentService->delete($attachment);
+
+        return response()->noContent();
     }
 }

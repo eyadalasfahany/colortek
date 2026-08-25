@@ -31,4 +31,14 @@ final class ProjectPolicy
     {
         return $u->can('project.update') && $this->v->canView($u, $p);
     }
+
+    public function complete(User $u, Project $p): bool
+    {
+        return $u->can('project.complete') && $this->v->canView($u, $p);
+    }
+
+    public function cancel(User $u, Project $p): bool
+    {
+        return $u->can('project.cancel') && $this->v->canView($u, $p);
+    }
 }

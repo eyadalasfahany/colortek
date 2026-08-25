@@ -51,6 +51,8 @@ class TaskResource extends JsonResource
                 $this->relationLoaded('subject'),
                 fn (): ?array => $this->buildSubjectContext($locale),
             ),
+            'comments' => TaskCommentResource::collection($this->whenLoaded('comments')),
+            'time_entries' => TimeEntryResource::collection($this->whenLoaded('timeEntries')),
         ];
     }
 

@@ -160,6 +160,18 @@ final class Task extends Model
         return $this->hasMany(TaskFieldValue::class);
     }
 
+    /** @return HasMany<TaskComment, $this> */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class);
+    }
+
+    /** @return HasMany<TimeEntry, $this> */
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class);
+    }
+
     public function localizedTitle(?string $locale = null): string
     {
         if (is_array($this->title)) {

@@ -48,4 +48,29 @@ final class TaskPolicy
     {
         return $user->can('task.complete');
     }
+
+    public function unblock(User $user, Task $task): bool
+    {
+        return $user->can('task.unblock');
+    }
+
+    public function comment(User $user, Task $task): bool
+    {
+        return $user->can('task.comment');
+    }
+
+    public function reassign(User $user, Task $task): bool
+    {
+        return $user->can('task.reassign');
+    }
+
+    public function overrideDeadline(User $user, Task $task): bool
+    {
+        return $user->can('task.override_deadline');
+    }
+
+    public function createAdhoc(User $user): bool
+    {
+        return $user->can('task.create_adhoc');
+    }
 }

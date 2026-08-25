@@ -18,4 +18,14 @@ final class JournalPolicy
     {
         return $user->can('journal.view');
     }
+
+    public function submit(User $user, Journal $journal): bool
+    {
+        return $user->can('journal.prepare');
+    }
+
+    public function reopen(User $user, Journal $journal): bool
+    {
+        return $user->can('journal.reopen');
+    }
 }

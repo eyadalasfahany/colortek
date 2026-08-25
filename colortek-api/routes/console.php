@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\CloseStaleTimers;
 use App\Jobs\EscalateOverdue;
 use App\Jobs\OpenDailyJournal;
 use App\Jobs\RecalculateOverdueTasks;
@@ -16,3 +17,4 @@ Artisan::command('inspire', function () {
 Schedule::job(new OpenDailyJournal)->dailyAt('08:00')->timezone('Africa/Cairo');
 Schedule::job(new RecalculateOverdueTasks)->everyTenMinutes();
 Schedule::job(new EscalateOverdue)->everyThirtyMinutes();
+Schedule::job(new CloseStaleTimers)->hourly();

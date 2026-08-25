@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property CarbonImmutable|null $created_at
+ */
 final class AuditLog extends Model
 {
     public $timestamps = false;

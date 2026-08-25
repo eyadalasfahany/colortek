@@ -6,6 +6,7 @@ namespace App\Services\Payments;
 
 use App\Enums\JournalStatus;
 use App\Enums\PaymentStatus;
+use App\Events\JournalReopened;
 use App\Events\JournalSubmitted;
 use App\Exceptions\TaskNotReadyToComplete;
 use App\Models\Journal;
@@ -143,6 +144,8 @@ final class JournalService
             newValues: ['status' => JournalStatus::Open->value],
             reason: $reason,
         );
+
+        DB::afterCommit(fn () => event(new JournalReopened($journal->fresh(), $user, $reason)));
     }
 
     /** @param array<string, mixed> $fields */
