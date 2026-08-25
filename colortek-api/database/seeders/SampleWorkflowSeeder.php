@@ -77,7 +77,6 @@ final class SampleWorkflowSeeder extends Seeder
                     'form_schema' => ['fields' => $this->fieldsFor($code)],
                     'requires_timer' => $timer,
                     'blocks_when_site_not_ready' => false,
-                    'initial_status' => $code === 'sales_get_client_decision' ? 'waiting' : null,
                 ],
             );
         }

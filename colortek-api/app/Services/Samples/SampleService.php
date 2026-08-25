@@ -87,7 +87,7 @@ final class SampleService
                 'reference' => $this->referenceGenerator->forSample($project, $client),
                 'client_id' => $client->id,
                 'project_id' => $project?->id,
-                'root_sample_id' => 0,
+                'root_sample_id' => null,
                 'attempt_number' => 1,
                 'requested_by_user_id' => $user->id,
                 'requested_at' => now(),
