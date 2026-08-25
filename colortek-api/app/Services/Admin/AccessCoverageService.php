@@ -1,0 +1,2 @@
+<?php declare(strict_types=1); namespace App\Services\Admin; use App\Models\User; use App\Support\PermissionCatalog;
+final class AccessCoverageService { public function gaps(): array { $g=[]; foreach(PermissionCatalog::COVERAGE_CHECKS as $p) if(User::permission($p)->where('active',true)->count()===0) $g[]=['permission'=>$p,'description'=>PermissionCatalog::description($p),'holder_count'=>0]; return $g; }}

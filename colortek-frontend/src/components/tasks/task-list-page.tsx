@@ -45,7 +45,7 @@ export default function TaskListPage({
       ) : null}
 
       {tasksQuery.isSuccess ? (
-        <TaskList tasks={tasksQuery.data.data} emptyMessage={emptyMessage} />
+        <TaskList tasks={tasksQuery.data.data} emptyMessage={emptyMessage} showClaimAction={scope === "queue"} />
       ) : null}
     </div>
   );
