@@ -1,15 +1,16 @@
 'use client';
 
-import { buttonStyles } from '@/components/tailgrids/core/button';
 import { CollapsibleGroup } from '@/components/tailgrids/core/collapsible';
 import { cn } from '@/utils/cn';
 import { Logo, LogoWithText, LogoWithTextDark } from '@/utils/icon';
 import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import type { Key } from 'react-aria-components';
-import { NAV_DATA } from './data';
+import { useFilteredNavItems } from '@/hooks/use-nav-items';
+import { usePermissions } from '@/hooks/use-permissions';
+import { Link, usePathname } from '@/i18n/navigation';
+import { ADMIN_NAV } from './admin-nav-data';
 import { CloseIcon, SidebarExpandedIcon, ThreeDots } from './icon';
 import NavItem from './nav-item';
 import { findActiveGroupKey } from './utils';
@@ -27,11 +28,52 @@ export default function Sidebar({
 }) {
     const pathname = usePathname();
     const { theme } = useTheme();
+    const { canAny } = usePermissions();
+    const mainItems = useFilteredNavItems();
+    const t = useTranslations('nav');
 
-    // Compute which group should be open based on the current route
+    const navSections = useMemo(() => {
+        const adminItems = ADMIN_NAV.items
+            .map((item) => ({
+                titleKey: item.titleKey,
+                title: t(item.titleKey),
+                icon: item.icon,
+                url: undefined as string | undefined,
+                items: item.items
+                    ?.filter((sub) => {
+                        const perms = sub.permission.split('|');
+                        return canAny(...perms);
+                    })
+                    .map((sub) => ({ title: t(sub.titleKey), url: sub.url })),
+            }))
+            .filter((item) => item.items && item.items.length > 0);
+
+        const sections = [
+            {
+                label: t('mainMenu'),
+                items: mainItems.map((item) => ({
+                    titleKey: item.titleKey,
+                    title: t(item.titleKey),
+                    icon: item.icon,
+                    url: item.url,
+                    items: (item.items ?? []).map((sub) => ({
+                        title: t(sub.titleKey),
+                        url: sub.url,
+                    })),
+                })),
+            },
+        ];
+
+        if (adminItems.length > 0) {
+            sections.push({ label: t(ADMIN_NAV.labelKey), items: adminItems });
+        }
+
+        return sections;
+    }, [canAny, mainItems, t]);
+
     const activeGroupKey = useMemo(
-        () => findActiveGroupKey(pathname),
-        [pathname],
+        () => findActiveGroupKey(pathname, navSections),
+        [pathname, navSections],
     );
 
     const [expandedKeys, setExpandedKeys] = useState<Set<Key>>(
@@ -40,7 +82,6 @@ export default function Sidebar({
 
     return (
         <div className='flex h-full flex-col overflow-hidden'>
-            {/* Header */}
             <div
                 className={cn(
                     'flex items-center px-4 pt-7 text-text-primary',
@@ -49,15 +90,13 @@ export default function Sidebar({
                         : 'flex-col justify-center gap-4',
                 )}
             >
-                <Link href='/'>
+                <Link href='/' onClick={onItemClick}>
                     {isSidebarOpen ? (
-                        <>
-                            {theme === 'light' ? (
-                                <LogoWithText />
-                            ) : (
-                                <LogoWithTextDark />
-                            )}
-                        </>
+                        theme === 'light' ? (
+                            <LogoWithText />
+                        ) : (
+                            <LogoWithTextDark />
+                        )
                     ) : (
                         <Logo />
                     )}
@@ -72,14 +111,13 @@ export default function Sidebar({
                             : 'text-icon-tertiary hover:text-text-secondary',
                     )}
                     aria-label={
-                        isMobileSheet ? 'Close sidebar' : 'Toggle sidebar'
+                        isMobileSheet ? t('sidebar') : isSidebarOpen ? t('collapseSidebar') : t('expandSidebar')
                     }
                 >
                     {isMobileSheet ? <CloseIcon /> : <SidebarExpandedIcon />}
                 </button>
             </div>
 
-            {/* Navigation */}
             <nav
                 className={cn(
                     'scrollbar-thin flex-1 overflow-y-auto',
@@ -90,9 +128,8 @@ export default function Sidebar({
                     expandedKeys={expandedKeys}
                     onExpandedChange={setExpandedKeys}
                 >
-                    {NAV_DATA.map((section) => (
+                    {navSections.map((section) => (
                         <div key={section.label}>
-                            {/* Expanded: show section label | Collapsed: show divider between sections */}
                             {isSidebarOpen ? (
                                 <p className='mt-6 mb-4 text-xs text-text-tertiary uppercase'>
                                     {section.label}
@@ -128,31 +165,6 @@ export default function Sidebar({
                     ))}
                 </CollapsibleGroup>
             </nav>
-
-            {/* Footer — only visible when expanded */}
-            {isSidebarOpen && (
-                <div className='px-4 py-4'>
-                    <div className='rounded-2xl bg-background-gray-primary px-4 py-5 text-center'>
-                        <p className='mb-2 leading-6 font-semibold text-text-primary'>
-                            Upgrade to Pro
-                        </p>
-                        <small className='text-sm leading-5 tracking-[-0.15px] text-text-tertiary'>
-                            Get all dashboard and 200+ essential UI elements
-                        </small>
-                        <Link
-                            href='https://nextadmin.co/pricing'
-                            className={buttonStyles({
-                                size: 'lg',
-                                className: 'mt-4 h-10 w-full bg-brand-500',
-                            })}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                        >
-                            Upgrade to Pro
-                        </Link>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

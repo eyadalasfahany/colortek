@@ -1,0 +1,81 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Admin;
+
+use App\Models\User;
+use App\Services\Audit\AuditLogger;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
+
+final class RoleService
+{
+    public function __construct(private AuditLogger $audit) {}
+
+    public function paginate(int $per = 15): LengthAwarePaginator
+    {
+        return Role::withCount(['permissions', 'users'])->orderBy('name')->paginate($per);
+    }
+
+    public function store(array $d, User $a): Role
+    {
+        return DB::transaction(function () use ($d, $a) {
+            $r = Role::create(['name' => $d['name'], 'guard_name' => 'web']);
+            $p = $d['permissions'] ?? [];
+            $r->syncPermissions($p);
+            /** @var Model&Role $roleModel */
+            $roleModel = $r;
+            $this->audit->log($roleModel, 'created', $a, null, ['permissions' => $p]);
+
+            return $r->loadCount(['permissions', 'users']);
+        });
+    }
+
+    public function update(Role $r, array $d, User $a): Role
+    {
+        if ($r->name === 'super_admin') {
+            throw ValidationException::withMessages(['role' => ['Protected']]);
+        }
+
+        return DB::transaction(function () use ($r, $d, $a) {
+            $old = $r->permissions->pluck('name')->all();
+            if (isset($d['name'])) {
+                $r->update(['name' => $d['name']]);
+            } if (array_key_exists('permissions', $d)) {
+                $r->syncPermissions($d['permissions']);
+                /** @var Model&Role $roleModel */
+                $roleModel = $r;
+                $this->audit->log($roleModel, 'updated', $a, ['permissions' => $old], ['permissions' => $r->fresh()->permissions->pluck('name')->all()]);
+            }
+
+            return $r->fresh()->loadCount(['permissions', 'users']);
+        });
+    }
+
+    public function delete(Role $r): array
+    {
+        if ($r->name === 'super_admin') {
+            throw ValidationException::withMessages(['role' => ['Protected']]);
+        } $n = $r->users()->count();
+        if ($n > 0) {
+            throw ValidationException::withMessages(['role' => ["Assigned to $n users"]]);
+        } $r->delete();
+
+        return ['deleted' => true];
+    }
+
+    public function findOrFail(int $id): Role
+    {
+        $r = Role::withCount(['permissions', 'users'])->find($id);
+        if (! $r) {
+            throw new ModelNotFoundException(__('Role not found'));
+        }
+
+        return $r;
+    }
+}

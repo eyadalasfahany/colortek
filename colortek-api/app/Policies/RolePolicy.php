@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\User;
+use Spatie\Permission\Models\Role;
+
+final class RolePolicy
+{
+    public function viewAny(User $u): bool
+    {
+        return $u->can('role.manage');
+    }
+
+    public function create(User $u): bool
+    {
+        return $u->can('role.manage');
+    }
+
+    public function update(User $u, Role $r): bool
+    {
+        return $u->can('role.manage') && $r->name !== 'super_admin';
+    }
+
+    public function delete(User $u, Role $r): bool
+    {
+        return $u->can('role.manage') && $r->name !== 'super_admin';
+    }
+}

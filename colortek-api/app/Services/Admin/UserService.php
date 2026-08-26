@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Admin;
+
+use App\Enums\TaskStatus;
+use App\Models\Task;
+use App\Models\User;
+use App\Repositories\UserRepository;
+use App\Support\PermissionCatalog;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
+final class UserService
+{
+    public function __construct(private UserRepository $repo) {}
+
+    public function paginate(array $f = [], int $per = 15): LengthAwarePaginator
+    {
+        return $this->repo->paginateForAdmin($f, $per);
+    }
+
+    public function store(array $d): User
+    {
+        return DB::transaction(function () use ($d) {
+            $u = User::create(['name' => $d['name'], 'email' => $d['email'], 'password' => Hash::make($d['password']), 'phone' => $d['phone'] ?? null, 'locale' => $d['locale'] ?? 'en', 'primary_department_id' => $d['primary_department_id'] ?? null, 'active' => $d['active'] ?? true]);
+            if (isset($d['departments'])) {
+                $this->syncDepartments($u, $d['departments']);
+            }
+
+            return $u->fresh(['departments', 'primaryDepartment', 'roles']);
+        });
+    }
+
+    public function update(User $u, array $d, User $actor): User
+    {
+        if ($u->isSuperAdmin() && ($d['active'] ?? true) === false && $this->repo->countSuperAdmins() <= 1) {
+            throw ValidationException::withMessages(['active' => ['Last super admin']]);
+        } $claimed = 0;
+        if (($d['active'] ?? true) === false) {
+            $claimed = Task::where('claimed_by_user_id', $u->id)->whereIn('status', [TaskStatus::Claimed, TaskStatus::InProgress, TaskStatus::Paused])->count();
+            if ($claimed > 0 && empty($d['release_claimed_tasks'])) {
+                throw ValidationException::withMessages(['release_claimed_tasks' => ["Holds $claimed tasks"]]);
+            }
+        }
+
+        return DB::transaction(function () use ($u, $d, $claimed) {
+            $u->update(collect($d)->only(['name', 'email', 'phone', 'locale', 'primary_department_id', 'active'])->filter(fn ($v) => $v !== null)->all());
+            if (! empty($d['password'])) {
+                $u->update(['password' => Hash::make($d['password'])]);
+            } if (isset($d['departments'])) {
+                $this->syncDepartments($u, $d['departments']);
+            } if ($claimed > 0 && ! empty($d['release_claimed_tasks'])) {
+                Task::where('claimed_by_user_id', $u->id)->update(['status' => TaskStatus::Ready, 'claimed_by_user_id' => null, 'claimed_at' => null, 'started_at' => null]);
+            }
+
+            return $u->fresh(['departments', 'primaryDepartment', 'roles']);
+        });
+    }
+
+    public function syncRoles(User $u, array $roles, User $a): User
+    {
+        if ($u->isSuperAdmin() && ! in_array('super_admin', $roles, true) && $this->repo->countSuperAdmins() <= 1) {
+            throw ValidationException::withMessages(['roles' => ['Last super admin']]);
+        } $u->syncRoles($roles);
+
+        return $u->fresh(['departments', 'primaryDepartment', 'roles']);
+    }
+
+    public function effectivePermissions(User $u): array
+    {
+        return collect($u->getAllPermissions()->pluck('name'))->sort()->map(fn ($p) => ['permission' => $p, 'description' => PermissionCatalog::description($p)])->values()->all();
+    }
+
+    public function findOrFail(int $id): User
+    {
+        /** @var User $user */
+        $user = $this->repo->findOneOrFail($id, ['departments', 'primaryDepartment', 'roles']);
+
+        return $user;
+    }
+
+    private function syncDepartments(User $u, array $deps): void
+    {
+        $sync = [];
+        foreach ($deps as $dep) {
+            $sync[(int) $dep['id']] = ['is_supervisor' => (bool) ($dep['is_supervisor'] ?? false)];
+        } $u->departments()->sync($sync);
+    }
+}

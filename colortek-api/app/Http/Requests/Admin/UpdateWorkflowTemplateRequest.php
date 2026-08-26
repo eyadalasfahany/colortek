@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Admin;
+
+use App\Enums\TaskPriority;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+final class UpdateWorkflowTemplateRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        return ['name_en' => ['sometimes', 'string', 'max:255'], 'name_ar' => ['sometimes', 'string', 'max:255'], 'definitions' => ['sometimes', 'array'], 'definitions.*.id' => ['required', 'integer', 'exists:workflow_task_definitions,id'], 'definitions.*.title_en' => ['sometimes', 'string', 'max:255'], 'definitions.*.title_ar' => ['sometimes', 'string', 'max:255'], 'definitions.*.instructions_en' => ['nullable', 'string'], 'definitions.*.instructions_ar' => ['nullable', 'string'], 'definitions.*.sla_minutes' => ['nullable', 'integer', 'min:1'], 'definitions.*.escalate_after_minutes' => ['nullable', 'integer', 'min:1'], 'definitions.*.priority' => ['nullable', Rule::enum(TaskPriority::class)]];
+    }
+}

@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +44,26 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function inDepartment(string $code): static
+    {
+        return $this->afterCreating(function (User $user) use ($code): void {
+            $department = Department::query()->where('code', $code)->first()
+                ?? Department::factory()->create(['code' => $code]);
+
+            $user->departments()->syncWithoutDetaching([$department->id]);
+            $user->assignRole(match ($code) {
+                'sales' => 'sales',
+                'reception' => 'reception',
+                'accounting' => 'accounting',
+                'site' => 'site_engineer',
+                'workshop' => 'workshop_supervisor',
+                'management' => 'management',
+                'tinting' => 'tinting',
+                'admin' => 'admin',
+                default => 'sales',
+            });
+        });
     }
 }

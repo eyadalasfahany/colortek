@@ -1,30 +1,28 @@
 /**
  * Colortek Design System — font loading (Next.js)
- * Montserrat is the exact family used across the Neocement catalogue.
+ * Montserrat for Latin; Cairo for Arabic (similar weight/x-height).
  *
- * Usage in app/layout.tsx:
+ * Usage in app/[locale]/layout.tsx:
  *
- *   import { montserrat } from "../design-system/fonts";
+ *   import { cairo, montserrat } from "../../design-system/fonts";
  *
- *   export default function RootLayout({ children }: { children: React.ReactNode }) {
- *     return (
- *       <html lang="en" className={montserrat.variable}>
- *         <body>{children}</body>
- *       </html>
- *     );
- *   }
+ *   <html className={cn(montserrat.variable, cairo.variable, locale === "ar" ? cairo.className : montserrat.className)}>
  *
- * next/font self-hosts the font at build time (no runtime request to
- * Google Fonts, no layout shift) and exposes it as the CSS variable
- * --font-montserrat, which tailwind.tokens.ts already wires to
- * Tailwind's `font-sans`.
+ * next/font self-hosts at build time (no runtime Google Fonts request).
  */
 
-import { Montserrat } from "next/font/google";
+import { Cairo, Montserrat } from "next/font/google";
 
 export const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-montserrat",
+  display: "swap",
+});
+
+export const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-cairo",
   display: "swap",
 });

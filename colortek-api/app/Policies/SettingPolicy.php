@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\Setting;
+use App\Models\User;
+
+final class SettingPolicy
+{
+    public function viewAny(User $u): bool
+    {
+        return $u->can('settings.manage');
+    }
+
+    public function update(User $u, ?Setting $s = null): bool
+    {
+        return $u->can('settings.manage');
+    }
+}

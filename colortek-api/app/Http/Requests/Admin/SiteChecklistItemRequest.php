@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Admin;
+
+use App\Enums\ChecklistAnswerType;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+final class SiteChecklistItemRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        $id = $this->route('id');
+
+        return ['code' => [$id ? 'sometimes' : 'required', 'string', 'max:50', Rule::unique('site_checklist_items', 'code')->ignore($id)], 'label_en' => ['sometimes', 'string', 'max:250'], 'label_ar' => ['sometimes', 'string', 'max:250'], 'answer_type' => ['sometimes', Rule::enum(ChecklistAnswerType::class)], 'unit' => ['nullable', 'string', 'max:20'], 'is_readiness_critical' => ['sometimes', 'boolean'], 'allows_note' => ['sometimes', 'boolean'], 'sort_order' => ['sometimes', 'integer', 'min:0'], 'active' => ['sometimes', 'boolean']];
+    }
+}

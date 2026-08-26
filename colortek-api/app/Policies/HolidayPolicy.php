@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\Holiday;
+use App\Models\User;
+
+final class HolidayPolicy
+{
+    public function viewAny(User $u): bool
+    {
+        return $u->can('holiday.manage');
+    }
+
+    public function create(User $u): bool
+    {
+        return $u->can('holiday.manage');
+    }
+
+    public function update(User $u, Holiday $h): bool
+    {
+        return $u->can('holiday.manage');
+    }
+
+    public function delete(User $u, Holiday $h): bool
+    {
+        return $u->can('holiday.manage');
+    }
+}

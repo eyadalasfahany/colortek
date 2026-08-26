@@ -6,10 +6,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/tailgrids/core/tooltip";
 import { cn } from "@/utils/cn";
 import { AltArrowUpIcon } from "@/utils/icon";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import React from "react";
 import { isPathActive } from "./utils";
+import { Link, usePathname } from "@/i18n/navigation";
 
 export interface NavItemProps {
   id?: string;
@@ -94,7 +93,7 @@ export default function NavItem({
           <AltArrowUpIcon className="rotate-180 text-icon-tertiary duration-200 group-data-expanded:rotate-0" />
         </CollapsibleTrigger>
 
-        <CollapsibleContent className="space-y-1 pr-0 group-data-expanded:mt-2">
+        <CollapsibleContent className="space-y-1 pe-0 group-data-expanded:mt-2">
           {items.map((item) => {
             const isChildActive = item.url ? isPathActive(item.url, pathname) : false;
 

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   AlphabetIcon,
   HomeIcon,
@@ -5,122 +7,96 @@ import {
   TableIcon,
   UserIcon,
   Widget4Icon,
-  WindowIcon
+  WindowIcon,
 } from "./icon";
 
-export const NAV_DATA = [
+export interface NavItemConfig {
+  /** next-intl key under `nav` */
+  titleKey: string;
+  url?: string;
+  icon: React.ReactNode;
+  permission?: string;
+  departmentCodes?: string[];
+  items?: Array<{ titleKey: string; url: string; permission?: string }>;
+}
+
+/** Production navigation per specs/09-screens/00-screen-map.md */
+export const MAIN_NAV_ITEMS: NavItemConfig[] = [
   {
-    label: "MAIN MENU",
-    items: [
-      {
-        title: "Dashboard",
-        icon: <HomeIcon />,
-        items: [
-          {
-            title: "E-commerce",
-            url: "/",
-          },
-          
-        ],
-      },   
-      {
-        title: "Profile",
-        url: "/profile",
-        icon: <UserIcon />,
-        items: [],
-      },
-      {
-        title: "Forms",
-        icon: <AlphabetIcon />,
-        items: [
-          {
-            title: "Form Elements",
-            url: "/form-elements",
-          },
-        ],
-      },
-      {
-        title: "Tables",
-        url: "/tables",
-        icon: <TableIcon />,
-        items: [
-          {
-            title: "Basic Tables",
-            url: "/tables/basic-tables",
-          },
-        ],
-      },
-      {
-        title: "Pages",
-        icon: <WindowIcon />,
-        items: [
-          {
-            title: "Error Page",
-            url: "/error-page",
-          },
-          {
-            title: "Terms & Conditions",
-            url: "/terms-and-conditions",
-          },
-          {
-            title: "Mail Success",
-            url: "/mail-success",
-          },
-        ],
-      },
-    ],
+    titleKey: "controlRoom",
+    url: "/",
+    icon: <HomeIcon />,
+    permission: "project.view_all",
   },
   {
-    label: "OTHERS",
-    items: [
-      {
-        title: "Charts",
-        icon: <PieChartIcon />,
-        items: [
-          {
-            title: "Line Charts",
-            url: "/charts/line-charts",
-          },
-          {
-            title: "Bar Charts",
-            url: "/charts/bar-charts",
-          },
-          {
-            title: "Pie Charts",
-            url: "/charts/pie-charts",
-          },
-        ],
-      },
-      {
-        title: "UI Elements",
-        icon: <Widget4Icon />,
-        items: [
-          {
-            title: "Accordion",
-            url: "/ui-elements/accordion",
-          },
-          {
-            title: "Avatars",
-            url: "/ui-elements/avatars",
-          },
-          {
-            title: "Buttons",
-            url: "/ui-elements/buttons",
-          },
-          {
-            title: "Breadcrumbs",
-            url: "/ui-elements/breadcrumbs",
-          },
-          {
-            title: "Progress",
-            url: "/ui-elements/progress",
-          },
-          {
-            title: "Tooltips",
-            url: "/ui-elements/tooltips",
-          },
-        ],
-      },
-    ],
+    titleKey: "myTasks",
+    url: "/my-tasks",
+    icon: <TableIcon />,
+  },
+  {
+    titleKey: "queue",
+    url: "/queue",
+    icon: <TableIcon />,
+    permission: "task.view_own_queue",
+  },
+  {
+    titleKey: "projects",
+    url: "/projects",
+    icon: <WindowIcon />,
+    permission: "project.view",
+  },
+  {
+    titleKey: "samples",
+    url: "/samples",
+    icon: <TableIcon />,
+    permission: "sample.view",
+  },
+  {
+    titleKey: "site",
+    url: "/site",
+    icon: <WindowIcon />,
+    permission: "site.view",
+  },
+  {
+    titleKey: "workshop",
+    url: "/workshop",
+    icon: <Widget4Icon />,
+    departmentCodes: ["workshop", "tinting"],
+  },
+  {
+    titleKey: "journal",
+    url: "/journal",
+    icon: <AlphabetIcon />,
+    permission: "journal.view",
+  },
+  {
+    titleKey: "peopleHours",
+    url: "/people-hours",
+    icon: <UserIcon />,
+    permission: "time.view_all",
+  },
+  {
+    titleKey: "activity",
+    url: "/activity",
+    icon: <PieChartIcon />,
+  },
+];
+
+export const MOBILE_PRIMARY_NAV = [
+  { titleKey: "myTasks", url: "/my-tasks" },
+  { titleKey: "queue", url: "/queue", permission: "task.view_own_queue" },
+  { titleKey: "projects", url: "/projects", permission: "project.view" },
+] as const;
+
+/** Flat list for legacy search fallback */
+export const NAV_DATA = [
+  {
+    labelKey: "mainMenu",
+    items: MAIN_NAV_ITEMS.map((item) => ({
+      titleKey: item.titleKey,
+      url: item.url,
+      icon: item.icon,
+      items: item.items ?? [],
+    })),
   },
 ];
