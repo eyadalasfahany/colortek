@@ -1,11 +1,6 @@
-import Providers from "@/app/providers";
-import { cn } from "@/utils/cn";
 import type { Metadata } from "next";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
-import { montserrat } from "../../design-system/fonts";
-import "../../design-system/tokens.css";
 import "./globals.css";
+import "../../design-system/tokens.css";
 
 export const metadata: Metadata = {
   title: {
@@ -15,23 +10,14 @@ export const metadata: Metadata = {
   description: "Colortek admin dashboard.",
 };
 
+/**
+ * Root layout stays minimal — html/body, lang, dir, and fonts live in [locale]/layout.
+ * Next.js still requires a root layout file.
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html
-      suppressHydrationWarning
-      lang="en"
-      className={cn("h-full overflow-hidden antialiased", montserrat.variable, montserrat.className)}
-    >
-      <body className="h-full overflow-hidden bg-background-gray-secondary_alt_2">
-        <ThemeProvider defaultTheme="light" enableSystem>
-          <Providers>{children}</Providers>
-        </ThemeProvider>
-        <Toaster />
-      </body>
-    </html>
-  );
+  return children;
 }

@@ -9,9 +9,10 @@ import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import { queryKeys } from "@/lib/queryKeys";
 import { getProjects } from "@/services/projectService";
 import type { ProjectSummary } from "@/types/projects";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 export default function ProjectListPage() {
   return (
@@ -22,6 +23,9 @@ export default function ProjectListPage() {
 }
 
 function ProjectListContent() {
+  const t = useTranslations("projects");
+  const tStates = useTranslations("states");
+  const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("");
 
@@ -33,19 +37,17 @@ function ProjectListContent() {
   const projects = query.data?.data ?? [];
 
   return (
-    <div className="px-4 pt-6 lg:px-6" dir="auto">
+    <div className="px-4 pt-6 lg:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-text-primary">Projects</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Search by reference, name or client.
-        </p>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("title")}</h1>
+        <p className="mt-1 text-sm text-text-secondary">{t("description")}</p>
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search projects…"
+          placeholder={t("searchPlaceholder")}
           className="w-full px-3 py-2.5 text-sm sm:max-w-xs"
         />
         <select
@@ -53,7 +55,7 @@ function ProjectListContent() {
           onChange={(e) => setStage(e.target.value)}
           className="rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"
         >
-          <option value="">All stages</option>
+          <option value="">{t("stage")}</option>
           <option value="lead">Lead</option>
           <option value="quotation">Quotation</option>
           <option value="payment">Payment</option>
@@ -67,9 +69,9 @@ function ProjectListContent() {
 
       {query.isError ? (
         <Alert status="error">
-          <AlertTitle>Could not load projects</AlertTitle>
+          <AlertTitle>{tStates("error")}</AlertTitle>
           <AlertDescription>
-            {query.error instanceof Error ? query.error.message : "Something went wrong."}
+            {query.error instanceof Error ? query.error.message : tStates("error")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -77,19 +79,19 @@ function ProjectListContent() {
       {query.isSuccess ? (
         projects.length === 0 ? (
           <Card>
-            <CardDescription>No projects match your filters.</CardDescription>
+            <CardDescription>{t("empty")}</CardDescription>
           </Card>
         ) : (
           <>
             <div className="hidden md:block">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-card-border text-left text-text-tertiary">
-                    <th className="py-2 pr-4">Reference</th>
-                    <th className="py-2 pr-4">Name</th>
-                    <th className="py-2 pr-4">Client</th>
-                    <th className="py-2 pr-4">Stage</th>
-                    <th className="py-2">Status</th>
+                  <tr className="border-b border-card-border text-start text-text-tertiary">
+                    <th className="py-2 pe-4">{t("reference")}</th>
+                    <th className="py-2 pe-4">{t("name")}</th>
+                    <th className="py-2 pe-4">{t("client")}</th>
+                    <th className="py-2 pe-4">{t("stage")}</th>
+                    <th className="py-2">{tCommon("status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -114,14 +116,14 @@ function ProjectListContent() {
 function ProjectTableRow({ project }: { project: ProjectSummary }) {
   return (
     <tr className="border-b border-card-border hover:bg-background-gray-primary">
-      <td className="py-3 pr-4">
+      <td className="py-3 pe-4">
         <Link href={`/projects/${project.reference}`} className="font-medium text-brand-500">
           {project.reference}
         </Link>
       </td>
-      <td className="py-3 pr-4">{project.name}</td>
-      <td className="py-3 pr-4">{project.client_name ?? "—"}</td>
-      <td className="py-3 pr-4 capitalize">{project.stage}</td>
+      <td className="py-3 pe-4">{project.name}</td>
+      <td className="py-3 pe-4">{project.client_name ?? "—"}</td>
+      <td className="py-3 pe-4 capitalize">{project.stage}</td>
       <td className="py-3">
         <ProjectStatusBadges project={project} />
       </td>

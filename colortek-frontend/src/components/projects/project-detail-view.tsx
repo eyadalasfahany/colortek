@@ -17,7 +17,7 @@ import {
 import type { ProjectDetail } from "@/types/projects";
 import { formatDeadlineInWords } from "@/utils/task-formatters";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 export default function ProjectDetailView({ reference }: { reference: string }) {
   return (

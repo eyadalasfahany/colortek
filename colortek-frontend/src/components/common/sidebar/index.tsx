@@ -1,16 +1,15 @@
 'use client';
 
-import { buttonStyles } from '@/components/tailgrids/core/button';
 import { CollapsibleGroup } from '@/components/tailgrids/core/collapsible';
 import { cn } from '@/utils/cn';
 import { Logo, LogoWithText, LogoWithTextDark } from '@/utils/icon';
 import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import type { Key } from 'react-aria-components';
 import { useFilteredNavItems } from '@/hooks/use-nav-items';
 import { usePermissions } from '@/hooks/use-permissions';
+import { Link, usePathname } from '@/i18n/navigation';
 import { ADMIN_NAV } from './admin-nav-data';
 import { CloseIcon, SidebarExpandedIcon, ThreeDots } from './icon';
 import NavItem from './nav-item';
@@ -31,11 +30,13 @@ export default function Sidebar({
     const { theme } = useTheme();
     const { canAny } = usePermissions();
     const mainItems = useFilteredNavItems();
+    const t = useTranslations('nav');
 
     const navSections = useMemo(() => {
         const adminItems = ADMIN_NAV.items
             .map((item) => ({
-                title: item.title,
+                titleKey: item.titleKey,
+                title: t(item.titleKey),
                 icon: item.icon,
                 url: undefined as string | undefined,
                 items: item.items
@@ -43,28 +44,32 @@ export default function Sidebar({
                         const perms = sub.permission.split('|');
                         return canAny(...perms);
                     })
-                    .map(({ title, url }) => ({ title, url })),
+                    .map((sub) => ({ title: t(sub.titleKey), url: sub.url })),
             }))
             .filter((item) => item.items && item.items.length > 0);
 
         const sections = [
             {
-                label: 'MAIN MENU',
+                label: t('mainMenu'),
                 items: mainItems.map((item) => ({
-                    title: item.title,
+                    titleKey: item.titleKey,
+                    title: t(item.titleKey),
                     icon: item.icon,
                     url: item.url,
-                    items: item.items ?? [],
+                    items: (item.items ?? []).map((sub) => ({
+                        title: t(sub.titleKey),
+                        url: sub.url,
+                    })),
                 })),
             },
         ];
 
         if (adminItems.length > 0) {
-            sections.push({ label: ADMIN_NAV.label, items: adminItems });
+            sections.push({ label: t(ADMIN_NAV.labelKey), items: adminItems });
         }
 
         return sections;
-    }, [canAny, mainItems]);
+    }, [canAny, mainItems, t]);
 
     const activeGroupKey = useMemo(
         () => findActiveGroupKey(pathname, navSections),
@@ -106,7 +111,7 @@ export default function Sidebar({
                             : 'text-icon-tertiary hover:text-text-secondary',
                     )}
                     aria-label={
-                        isMobileSheet ? 'Close sidebar' : 'Toggle sidebar'
+                        isMobileSheet ? t('sidebar') : isSidebarOpen ? t('collapseSidebar') : t('expandSidebar')
                     }
                 >
                     {isMobileSheet ? <CloseIcon /> : <SidebarExpandedIcon />}
@@ -149,7 +154,7 @@ export default function Sidebar({
                                         id={item.title}
                                         icon={item.icon}
                                         label={item.title}
-                                        href={(item as { url?: string }).url}
+                                        href={item.url}
                                         items={item.items}
                                         collapsed={!isSidebarOpen}
                                         onItemClick={onItemClick}

@@ -3,8 +3,8 @@
 import { useAuth } from "@/context/auth-context";
 import { hasToken } from "@/lib/auth-token";
 import { Spinner } from "@/components/tailgrids/core/spinner";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();

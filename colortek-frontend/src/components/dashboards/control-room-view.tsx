@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import { queryKeys } from "@/lib/queryKeys";
 import { getControlRoomDashboard } from "@/services/dashboardService";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 export default function ControlRoomView() {
   return (
@@ -20,27 +21,27 @@ export default function ControlRoomView() {
 }
 
 function ControlRoomContent() {
+  const t = useTranslations("dashboards");
+  const tStates = useTranslations("states");
   const query = useQuery({
     queryKey: queryKeys.dashboard.controlRoom(),
     queryFn: getControlRoomDashboard,
   });
 
   return (
-    <div className="space-y-6 px-4 pt-6 lg:px-6" dir="auto">
+    <div className="space-y-6 px-4 pt-6 lg:px-6">
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Control Room</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          What is happening right now, and what is stuck.
-        </p>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("controlRoomTitle")}</h1>
+        <p className="mt-1 text-sm text-text-secondary">{t("controlRoomDescription")}</p>
       </div>
 
       {query.isLoading ? <ControlRoomSkeleton /> : null}
 
       {query.isError ? (
         <Alert status="error">
-          <AlertTitle>Could not load dashboard</AlertTitle>
+          <AlertTitle>{tStates("error")}</AlertTitle>
           <AlertDescription>
-            {query.error instanceof Error ? query.error.message : "Something went wrong."}
+            {query.error instanceof Error ? query.error.message : tStates("error")}
           </AlertDescription>
         </Alert>
       ) : null}

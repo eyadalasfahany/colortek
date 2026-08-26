@@ -11,126 +11,89 @@ import {
 } from "./icon";
 
 export interface NavItemConfig {
-  title: string;
+  /** next-intl key under `nav` */
+  titleKey: string;
   url?: string;
   icon: React.ReactNode;
   permission?: string;
-  /** Show when user belongs to a department whose code matches one of these */
   departmentCodes?: string[];
-  items?: Array<{ title: string; url: string; permission?: string }>;
+  items?: Array<{ titleKey: string; url: string; permission?: string }>;
 }
 
 /** Production navigation per specs/09-screens/00-screen-map.md */
 export const MAIN_NAV_ITEMS: NavItemConfig[] = [
   {
-    title: "Control Room",
+    titleKey: "controlRoom",
     url: "/",
     icon: <HomeIcon />,
     permission: "project.view_all",
   },
   {
-    title: "My Tasks",
+    titleKey: "myTasks",
     url: "/my-tasks",
     icon: <TableIcon />,
   },
   {
-    title: "Queue",
+    titleKey: "queue",
     url: "/queue",
     icon: <TableIcon />,
     permission: "task.view_own_queue",
   },
   {
-    title: "Projects",
+    titleKey: "projects",
     url: "/projects",
     icon: <WindowIcon />,
     permission: "project.view",
   },
   {
-    title: "Samples",
+    titleKey: "samples",
     url: "/samples",
     icon: <TableIcon />,
     permission: "sample.view",
   },
   {
-    title: "Site",
+    titleKey: "site",
     url: "/site",
     icon: <WindowIcon />,
     permission: "site.view",
   },
   {
-    title: "Workshop",
+    titleKey: "workshop",
     url: "/workshop",
     icon: <Widget4Icon />,
     departmentCodes: ["workshop", "tinting"],
   },
   {
-    title: "Journal",
+    titleKey: "journal",
     url: "/journal",
     icon: <AlphabetIcon />,
     permission: "journal.view",
   },
   {
-    title: "People & Hours",
+    titleKey: "peopleHours",
     url: "/people-hours",
     icon: <UserIcon />,
     permission: "time.view_all",
   },
   {
-    title: "Activity",
+    titleKey: "activity",
     url: "/activity",
     icon: <PieChartIcon />,
   },
 ];
 
 export const MOBILE_PRIMARY_NAV = [
-  { title: "My Tasks", url: "/my-tasks" },
-  { title: "Queue", url: "/queue", permission: "task.view_own_queue" },
-  { title: "Projects", url: "/projects", permission: "project.view" },
+  { titleKey: "myTasks", url: "/my-tasks" },
+  { titleKey: "queue", url: "/queue", permission: "task.view_own_queue" },
+  { titleKey: "projects", url: "/projects", permission: "project.view" },
 ] as const;
-
-/** Demo/template routes — kept in codebase but hidden from production nav */
-export const DEMO_NAV_DATA = [
-  {
-    label: "DEMO (dev only)",
-    items: [
-      {
-        title: "Forms",
-        icon: <AlphabetIcon />,
-        items: [{ title: "Form Elements", url: "/form-elements" }],
-      },
-      {
-        title: "Tables",
-        icon: <TableIcon />,
-        items: [{ title: "Basic Tables", url: "/tables/basic-tables" }],
-      },
-      {
-        title: "Charts",
-        icon: <PieChartIcon />,
-        items: [
-          { title: "Line Charts", url: "/charts/line-charts" },
-          { title: "Bar Charts", url: "/charts/bar-charts" },
-          { title: "Pie Charts", url: "/charts/pie-charts" },
-        ],
-      },
-      {
-        title: "UI Elements",
-        icon: <Widget4Icon />,
-        items: [
-          { title: "Accordion", url: "/ui-elements/accordion" },
-          { title: "Avatars", url: "/ui-elements/avatars" },
-          { title: "Buttons", url: "/ui-elements/buttons" },
-        ],
-      },
-    ],
-  },
-];
 
 /** Flat list for legacy search fallback */
 export const NAV_DATA = [
   {
-    label: "MAIN MENU",
+    labelKey: "mainMenu",
     items: MAIN_NAV_ITEMS.map((item) => ({
-      title: item.title,
+      titleKey: item.titleKey,
       url: item.url,
       icon: item.icon,
       items: item.items ?? [],

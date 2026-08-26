@@ -9,8 +9,8 @@ import {
 import { globalSearch } from '@/services/searchService';
 import type { SearchResultItem } from '@/types/notifications';
 import { Command } from 'cmdk';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useRouter } from "@/i18n/navigation";
 
 const GROUP_LABELS: Record<string, string> = {
   projects: 'Projects',
@@ -97,16 +97,16 @@ export default function SearchBar() {
             <div className='hidden xl:block'>
                 <button
                     onClick={() => setOpen(true)}
-                    className='w-full text-left outline-none focus:outline-none'
+                    className='w-full text-start outline-none focus:outline-none'
                     type='button'
                 >
                     <InputGroup className='h-10 cursor-pointer'>
-                        <InputGroupAddon align='inline-start' className='pr-0 text-icon-tertiary'>
+                        <InputGroupAddon align='inline-start' className='pe-0 text-icon-tertiary'>
                             <SearchIcon />
                         </InputGroupAddon>
                         <InputGroupInput
                             placeholder='Search projects, tasks, clients…'
-                            className='pointer-events-none cursor-pointer pl-2 text-sm select-none'
+                            className='pointer-events-none cursor-pointer ps-2 text-sm select-none'
                             readOnly
                         />
                         <InputGroupAddon align='inline-end'>
@@ -127,14 +127,14 @@ export default function SearchBar() {
             >
                 <div className='border-b border-card-border p-3.5'>
                     <InputGroup className='h-10'>
-                        <InputGroupAddon align='inline-start' className='pr-0 text-icon-tertiary'>
+                        <InputGroupAddon align='inline-start' className='pe-0 text-icon-tertiary'>
                             <SearchIcon />
                         </InputGroupAddon>
                         <Command.Input
                             value={query}
                             onValueChange={setQuery}
                             placeholder='Search SO9577, colour name, client…'
-                            className='w-full min-w-0 flex-1 border-none bg-transparent pl-2 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:ring-0 focus:outline-none'
+                            className='w-full min-w-0 flex-1 border-none bg-transparent ps-2 text-sm text-text-primary outline-none placeholder:text-text-tertiary focus:ring-0 focus:outline-none'
                         />
                         <InputGroupAddon align='inline-end'>
                             <div className='rounded-md border border-card-border bg-background-gray-primary/50 px-2 py-0.75 text-xs text-text-tertiary'>
@@ -178,7 +178,7 @@ export default function SearchBar() {
                                         >
                                             <span className='truncate text-text-primary'>{item.label}</span>
                                             {item.project_reference ? (
-                                                <span className='ml-2 shrink-0 text-xs text-text-tertiary'>
+                                                <span className='ms-2 shrink-0 text-xs text-text-tertiary'>
                                                     {item.project_reference}
                                                 </span>
                                             ) : null}

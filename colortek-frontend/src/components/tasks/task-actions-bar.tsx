@@ -21,6 +21,7 @@ import {
 } from "@/services/taskService";
 import type { TaskDetail } from "@/types/api";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface TaskActionsBarProps {
@@ -38,6 +39,9 @@ export function TaskActionsBar({
   onError,
   onCommentAdded,
 }: TaskActionsBarProps) {
+  const t = useTranslations("actions");
+  const tTasks = useTranslations("tasks");
+  const tCommon = useTranslations("common");
   const [blockOpen, setBlockOpen] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const [blockReason, setBlockReason] = useState("");
@@ -95,10 +99,10 @@ export function TaskActionsBar({
   if (task.status === "claimed") {
     secondaryActions.push(
       <Button key="release" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => releaseMutation.mutate()}>
-        Release
+        {t("release")}
       </Button>,
       <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
-        Block
+        {t("block")}
       </Button>,
     );
   }
@@ -106,13 +110,13 @@ export function TaskActionsBar({
   if (task.status === "in_progress") {
     secondaryActions.push(
       <Button key="pause" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => pauseMutation.mutate()}>
-        Pause
+        {t("pause")}
       </Button>,
       <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
-        Block
+        {t("block")}
       </Button>,
       <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
-        Add comment
+        {t("comment")}
       </Button>,
     );
   }
@@ -120,7 +124,7 @@ export function TaskActionsBar({
   if (task.status === "paused") {
     secondaryActions.push(
       <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
-        Block
+        {t("block")}
       </Button>,
     );
   }
@@ -128,7 +132,7 @@ export function TaskActionsBar({
   if (task.status === "blocked") {
     secondaryActions.push(
       <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
-        Add comment
+        {t("comment")}
       </Button>,
     );
   }
@@ -136,7 +140,7 @@ export function TaskActionsBar({
   if (["waiting", "pending"].includes(task.status)) {
     secondaryActions.push(
       <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
-        Add comment
+        {t("comment")}
       </Button>,
     );
   }
@@ -150,7 +154,7 @@ export function TaskActionsBar({
       {task.status === "paused" ? (
         <div className="mb-4">
           <Button variant="primary" appearance="fill" isDisabled={pending} onPress={() => resumeMutation.mutate()}>
-            Resume
+            {t("resume")}
           </Button>
         </div>
       ) : null}
@@ -158,19 +162,19 @@ export function TaskActionsBar({
       {task.status === "blocked" ? (
         <div className="mb-4">
           <Button variant="primary" appearance="fill" isDisabled={pending} onPress={() => unblockMutation.mutate()}>
-            Unblock
+            {t("unblock")}
           </Button>
         </div>
       ) : null}
 
       <Dialog isOpen={blockOpen} onOpenChange={setBlockOpen}>
         <DialogHeader>
-          <DialogTitle>Block task</DialogTitle>
-          <DialogDescription>Describe what is wrong so the right team is notified.</DialogDescription>
+          <DialogTitle>{t("block")}</DialogTitle>
+          <DialogDescription>{tTasks("blockReason")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3 py-0">
             <div>
-              <Label htmlFor="block-category">Category</Label>
+              <Label htmlFor="block-category">{tTasks("blockCategory")}</Label>
               <select
                 id="block-category"
                 value={blockCategoryId}
@@ -184,7 +188,7 @@ export function TaskActionsBar({
               </select>
             </div>
             <div>
-              <Label htmlFor="block-reason">What is wrong *</Label>
+              <Label htmlFor="block-reason">{tTasks("blockReason")}</Label>
               <TextArea
                 id="block-reason"
                 value={blockReason}
@@ -198,17 +202,22 @@ export function TaskActionsBar({
               isDisabled={!blockReason.trim() || pending}
               onPress={() => blockMutation.mutate()}
             >
-              Block task
+              {t("block")}
             </Button>
         </DialogBody>
       </Dialog>
 
       <Dialog isOpen={commentOpen} onOpenChange={setCommentOpen}>
         <DialogHeader>
-          <DialogTitle>Add comment</DialogTitle>
+          <DialogTitle>{t("comment")}</DialogTitle>
         </DialogHeader>
         <DialogBody className="py-0">
-          <TextArea value={commentBody} onChange={(e) => setCommentBody(e.target.value)} className="min-h-24" />
+          <TextArea
+            value={commentBody}
+            onChange={(e) => setCommentBody(e.target.value)}
+            className="min-h-24"
+            placeholder={tTasks("commentPlaceholder")}
+          />
           <Button
             variant="primary"
             appearance="fill"
@@ -216,7 +225,7 @@ export function TaskActionsBar({
             isDisabled={!commentBody.trim() || pending}
             onPress={() => commentMutation.mutate()}
           >
-            Post comment
+            {tCommon("submit")}
           </Button>
         </DialogBody>
       </Dialog>

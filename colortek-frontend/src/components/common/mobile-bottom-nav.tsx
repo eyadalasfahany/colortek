@@ -3,8 +3,8 @@
 import { MAIN_NAV_ITEMS, MOBILE_PRIMARY_NAV } from "@/components/common/sidebar/data";
 import { useCanSeeNavItem, useFilteredNavItems } from "@/hooks/use-nav-items";
 import { cn } from "@/utils/cn";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { SheetContent, SheetOverlay, SheetTitle } from "@/components/tailgrids/core/sheet";
 
@@ -13,6 +13,8 @@ export default function MobileBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const allItems = useFilteredNavItems();
   const canSee = useCanSeeNavItem;
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   const primaryItems = useMemo(
     () =>
@@ -53,7 +55,7 @@ export default function MobileBottomNav() {
                   active ? "text-brand-500" : "text-text-secondary",
                 )}
               >
-                <span className="font-medium">{item.title}</span>
+                <span className="font-medium">{t(item.titleKey)}</span>
               </Link>
             );
           })}
@@ -65,7 +67,7 @@ export default function MobileBottomNav() {
               isMoreActive ? "text-brand-500" : "text-text-secondary",
             )}
           >
-            <span className="font-medium">More</span>
+            <span className="font-medium">{tCommon("more")}</span>
           </button>
         </div>
       </nav>
@@ -73,7 +75,7 @@ export default function MobileBottomNav() {
       <SheetOverlay isOpen={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl border-card-border p-0">
           <SheetTitle className="border-b border-card-border px-4 py-3 text-base font-semibold">
-            More
+            {tCommon("more")}
           </SheetTitle>
           <ul className="max-h-80 overflow-y-auto py-2">
             {moreItems.map((item) => (
@@ -83,7 +85,7 @@ export default function MobileBottomNav() {
                   onClick={() => setMoreOpen(false)}
                   className="block px-4 py-3 text-sm text-text-primary hover:bg-background-gray-primary"
                 >
-                  {item.title}
+                  {t(item.titleKey)}
                 </Link>
               </li>
             ))}
@@ -94,7 +96,7 @@ export default function MobileBottomNav() {
                   onClick={() => setMoreOpen(false)}
                   className="block px-4 py-3 text-sm text-text-primary hover:bg-background-gray-primary"
                 >
-                  {item.title}
+                  {t(item.titleKey)}
                 </Link>
               </li>
             ))}

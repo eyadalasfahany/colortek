@@ -1,5 +1,7 @@
 import type { TaskListItem } from "@/types/api";
 
+export type MyTaskGroupKey = "overdue" | "today" | "blocked" | "other";
+
 export function groupMyTasks(tasks: TaskListItem[]) {
   const overdue: TaskListItem[] = [];
   const today: TaskListItem[] = [];
@@ -32,10 +34,12 @@ export function groupMyTasks(tasks: TaskListItem[]) {
     other.push(task);
   }
 
-  return [
-    { key: "overdue", label: "Overdue", tasks: overdue },
-    { key: "today", label: "Today", tasks: today },
-    { key: "blocked", label: "Blocked", tasks: blocked },
-    { key: "other", label: "Everything else", tasks: other },
-  ].filter((group) => group.tasks.length > 0);
+  return (
+    [
+      { key: "overdue" as const, tasks: overdue },
+      { key: "today" as const, tasks: today },
+      { key: "blocked" as const, tasks: blocked },
+      { key: "other" as const, tasks: other },
+    ] satisfies Array<{ key: MyTaskGroupKey; tasks: TaskListItem[] }>
+  ).filter((group) => group.tasks.length > 0);
 }

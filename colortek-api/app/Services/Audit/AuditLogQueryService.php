@@ -43,5 +43,9 @@ final class AuditLogQueryService
         if ($request->filled('since')) {
             $query->where('created_at', '>=', $request->string('since')->toString());
         }
+
+        if ($request->filled('until')) {
+            $query->where('created_at', '<=', $request->string('until')->toString());
+        }
     }
 }

@@ -12,9 +12,10 @@ import {
   priorityLabel,
   statusBadgeColor,
 } from "@/utils/task-formatters";
-import Link from "next/link";
 import { cn } from "@/utils/cn";
 import { groupMyTasks } from "@/utils/group-my-tasks";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 interface TaskListProps {
   tasks: TaskListItem[];
@@ -24,6 +25,13 @@ interface TaskListProps {
   onClaim?: (taskId: number) => void;
 }
 
+const GROUP_LABEL_KEYS = {
+  overdue: "overdue",
+  today: "today",
+  blocked: "blocked",
+  other: "everythingElse",
+} as const;
+
 export function GroupedTaskList({
   tasks,
   emptyMessage,
@@ -31,6 +39,8 @@ export function GroupedTaskList({
   tasks: TaskListItem[];
   emptyMessage: string;
 }) {
+  const t = useTranslations("tasks");
+
   if (tasks.length === 0) {
     return (
       <Card>
@@ -46,7 +56,7 @@ export function GroupedTaskList({
       {groups.map((group) => (
         <section key={group.key}>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-tertiary">
-            {group.label}
+            {t(GROUP_LABEL_KEYS[group.key])}
           </h2>
           <div className="flex flex-col gap-3">
             {group.tasks.map((task) => (
@@ -100,6 +110,8 @@ function TaskListItemCard({
   isClaiming: boolean;
   onClaim?: (taskId: number) => void;
 }) {
+  const t = useTranslations("tasks");
+  const tActions = useTranslations("actions");
   const priority = priorityLabel(task.priority);
   const canClaim = showClaimButton && task.status === "ready" && onClaim;
 
@@ -113,7 +125,11 @@ function TaskListItemCard({
           <CardTitle className="mt-1 text-base">{task.title}</CardTitle>
           <CardDescription className="mt-2 flex flex-wrap items-center gap-2">
             {task.department ? <span>{task.department.name}</span> : null}
-            {task.claimant ? <span>Claimed by {task.claimant.name}</span> : null}
+            {task.claimant ? (
+              <span>
+                {t("claimant")}: {task.claimant.name}
+              </span>
+            ) : null}
           </CardDescription>
         </Link>
 
@@ -142,7 +158,7 @@ function TaskListItemCard({
               isDisabled={isClaiming}
               onPress={() => onClaim(task.id)}
             >
-              {isClaiming ? "Claiming…" : "Claim"}
+              {isClaiming ? t("claiming") : tActions("claim")}
             </Button>
           ) : null}
         </div>

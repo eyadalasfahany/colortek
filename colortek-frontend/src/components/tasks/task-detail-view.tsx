@@ -38,9 +38,8 @@ import {
 } from "@/utils/task-formatters";
 import { cn } from "@/utils/cn";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Link, useRouter } from "@/i18n/navigation";
 
 interface TaskDetailViewProps {
   taskId: number;

@@ -64,7 +64,7 @@ export function TaskActivitySection({
     <div className="mb-4 space-y-4">
       <section>
         <h3 className="mb-3 text-lg font-semibold text-text-primary">Activity</h3>
-        <ul className="space-y-2 border-l-2 border-card-border pl-4">
+        <ul className="space-y-2 border-s-2 border-card-border ps-4">
           {timeline.map((entry) => (
             <li key={entry.id} className="text-sm">
               <p className="font-medium text-text-primary">{entry.label}</p>

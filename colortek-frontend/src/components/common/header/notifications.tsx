@@ -14,10 +14,10 @@ import {
 } from "@/services/notificationService";
 import { cn } from "@/utils/cn";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useState } from "react";
 import { Header, Heading } from "react-aria-components";
 import { formatDistanceToNow } from "date-fns";
+import { Link } from "@/i18n/navigation";
 
 export function NotificationsButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +63,7 @@ export function NotificationsButton() {
       >
         <BellIcon />
         {unreadCount > 0 && (
-          <span className={cn("absolute top-2 right-2.75 z-1 size-2 rounded-full bg-red-400")}>
+          <span className={cn("absolute top-2 end-2.75 z-1 size-2 rounded-full bg-red-400")}>
             <span className="absolute inset-0 -z-1 animate-ping rounded-full bg-red-400 opacity-75" />
           </span>
         )}

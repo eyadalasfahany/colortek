@@ -8,9 +8,9 @@ import { queryKeys } from "@/lib/queryKeys";
 import { getActivityFeed } from "@/services/activityService";
 import type { ActivityEvent, ActivitySeverity } from "@/types/activity";
 import { format } from "date-fns";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
 
 function severityColor(severity: ActivitySeverity) {
   switch (severity) {

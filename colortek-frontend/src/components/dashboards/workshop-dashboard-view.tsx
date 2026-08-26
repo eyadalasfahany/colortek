@@ -6,8 +6,8 @@ import { Card, CardDescription, CardTitle } from "@/components/tailgrids/core/ca
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
 import { queryKeys } from "@/lib/queryKeys";
 import { getWorkshopDashboard } from "@/services/dashboardService";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
 
 export default function WorkshopDashboardView() {
   return (

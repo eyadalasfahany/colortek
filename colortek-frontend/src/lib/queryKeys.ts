@@ -28,6 +28,16 @@ export const queryKeys = {
     checklist: () => ["admin", "checklist"] as const,
     failures: (tab: string) => ["admin", "failures", tab] as const,
     coverage: () => ["admin", "coverage"] as const,
+    audit: (params?: Record<string, unknown>) => ["admin", "audit", params] as const,
+  },
+  peopleHours: {
+    report: (params?: Record<string, unknown>) => ["peopleHours", "report", params] as const,
+  },
+  options: {
+    projects: () => ["options", "projects"] as const,
+    departments: () => ["options", "departments"] as const,
+    employees: () => ["options", "employees"] as const,
+    users: () => ["options", "users"] as const,
   },
   dashboard: {
     controlRoom: () => ["dashboard", "control-room"] as const,

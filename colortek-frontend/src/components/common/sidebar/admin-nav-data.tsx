@@ -1,17 +1,18 @@
 import { Widget4Icon } from "./icon";
 
 export const ADMIN_NAV = {
-  label: "ADMIN",
+  labelKey: "admin",
   items: [
     {
-      title: "Administration",
+      titleKey: "administration",
       icon: <Widget4Icon />,
       items: [
-        { title: "Calendar", url: "/admin/calendar", permission: "settings.manage|holiday.manage" },
-        { title: "Access", url: "/admin/access", permission: "role.manage|user.manage|employee.manage" },
-        { title: "Workflows", url: "/admin/workflows", permission: "workflow.view" },
-        { title: "Checklist", url: "/admin/checklist", permission: "settings.manage" },
-        { title: "Failures", url: "/admin/failures", permission: "settings.manage" },
+        { titleKey: "calendar", url: "/admin/calendar", permission: "settings.manage|holiday.manage" },
+        { titleKey: "access", url: "/admin/access", permission: "role.manage|user.manage|employee.manage" },
+        { titleKey: "workflows", url: "/admin/workflows", permission: "workflow.view" },
+        { titleKey: "checklist", url: "/admin/checklist", permission: "settings.manage" },
+        { titleKey: "failures", url: "/admin/failures", permission: "settings.manage" },
+        { titleKey: "audit", url: "/admin/audit", permission: "audit.view" },
       ],
     },
   ],

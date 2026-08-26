@@ -3,6 +3,7 @@
 import { usePermissions } from "@/hooks/use-permissions";
 import { Card, CardDescription } from "@/components/tailgrids/core/card";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 interface PermissionGateProps {
@@ -21,13 +22,14 @@ export default function PermissionGate({
   children,
 }: PermissionGateProps) {
   const { can, canAny } = usePermissions();
+  const t = useTranslations("states");
 
   if (permission && !can(permission)) {
     return (
       fallback ?? (
         <Card className="mx-4 mt-6">
           <CardDescription className="text-center text-text-secondary">
-            You do not have permission to view this screen.
+            {t("noPermission")}
           </CardDescription>
         </Card>
       )
@@ -39,7 +41,7 @@ export default function PermissionGate({
       fallback ?? (
         <Card className="mx-4 mt-6">
           <CardDescription className="text-center text-text-secondary">
-            You do not have permission to view this screen.
+            {t("noPermission")}
           </CardDescription>
         </Card>
       )

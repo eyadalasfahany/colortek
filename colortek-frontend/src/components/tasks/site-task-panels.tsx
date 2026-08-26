@@ -10,8 +10,8 @@ import { overrideSiteBlock } from "@/services/taskService";
 import type { TaskDetail } from "@/types/api";
 import type { CorrectiveActionSubjectContext, SiteBlockContext, SiteVisitSubjectContext } from "@/types/siteVisit";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useState } from "react";
+import { Link } from "@/i18n/navigation";
 
 export function SiteBlockPanel({ task, block }: { task: TaskDetail; block: SiteBlockContext }) {
   const [reason, setReason] = useState("");

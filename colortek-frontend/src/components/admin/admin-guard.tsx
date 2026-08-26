@@ -2,8 +2,8 @@
 
 import { usePermissions } from "@/hooks/use-permissions";
 import { Spinner } from "@/components/tailgrids/core/spinner";
-import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useRouter } from "@/i18n/navigation";
 
 export default function AdminGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function AdminGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!canAccessAdmin) {
-      router.replace("/error-page");
+      router.replace("/my-tasks");
     }
   }, [canAccessAdmin, router]);
 

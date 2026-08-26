@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/tailgrids/core/dropdown";
 import { AltArrowDownIcon } from "@/utils/icon";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 interface UserProfileMenuItem {
   href: string;
