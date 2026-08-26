@@ -8,6 +8,7 @@ export const ADMIN_NAV = {
       icon: <Widget4Icon />,
       items: [
         { titleKey: "calendar", url: "/admin/calendar", permission: "settings.manage|holiday.manage" },
+        { titleKey: "settings", url: "/admin/settings", permission: "settings.manage" },
         { titleKey: "access", url: "/admin/access", permission: "role.manage|user.manage|employee.manage" },
         { titleKey: "workflows", url: "/admin/workflows", permission: "workflow.view" },
         { titleKey: "checklist", url: "/admin/checklist", permission: "settings.manage" },

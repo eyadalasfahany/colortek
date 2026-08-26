@@ -38,6 +38,7 @@ import {
 } from "@/utils/task-formatters";
 import { cn } from "@/utils/cn";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -48,6 +49,8 @@ interface TaskDetailViewProps {
 export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const tActions = useTranslations("actions");
+  const tTasks = useTranslations("tasks");
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [uploadedAttachments, setUploadedAttachments] = useState<
     Record<string, UploadedAttachment[]>
@@ -73,13 +76,13 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const claimMutation = useMutation({
     mutationFn: claimTask,
     onSuccess: invalidateTaskQueries,
-    onError: (error) => setActionError(getErrorMessage(error)),
+    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const startMutation = useMutation({
     mutationFn: startTask,
     onSuccess: invalidateTaskQueries,
-    onError: (error) => setActionError(getErrorMessage(error)),
+    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const completeMutation = useMutation({
@@ -97,7 +100,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       setHandoverMessage(message);
       void invalidateTaskQueries();
     },
-    onError: (error) => setActionError(getErrorMessage(error)),
+    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const task = taskQuery.data;
@@ -121,12 +124,6 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
     );
   }, [formValues, task]);
 
-  const canComplete =
-    task?.status === "in_progress" &&
-    missingRequiredAttachments.length === 0 &&
-    missingRequiredFields.length === 0 &&
-    (!taskCode || taskCode !== "sales_get_client_decision" || missingRequiredAttachments.length === 0);
-
   const primaryAction = useMemo(() => {
     if (!task) {
       return null;
@@ -134,26 +131,32 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
     switch (task.status) {
       case "ready":
-        return { label: "Claim", action: () => claimMutation.mutate(task.id), disabled: false };
+        return { label: tActions("claim"), action: () => claimMutation.mutate(task.id), disabled: false };
       case "claimed":
-        return { label: "Start", action: () => startMutation.mutate(task.id), disabled: false };
+        return { label: tActions("start"), action: () => startMutation.mutate(task.id), disabled: false };
       case "in_progress":
         return {
-          label: "Complete",
+          label: tActions("complete"),
           action: () => {
             setFieldErrors({});
             if (missingRequiredFields.length > 0) {
               const errors: Record<string, string> = {};
               for (const field of missingRequiredFields) {
-                errors[field.name] = `${field.label} is required`;
+                errors[field.name] = tTasks("fieldRequired", { label: field.label });
               }
               setFieldErrors(errors);
-              setActionError(`Fill in required fields: ${missingRequiredFields.map((f) => f.label).join(", ")}`);
+              setActionError(
+                tTasks("fillRequiredFields", {
+                  fields: missingRequiredFields.map((f) => f.label).join(", "),
+                }),
+              );
               return;
             }
             if (missingRequiredAttachments.length > 0) {
               setActionError(
-                `Upload required files: ${missingRequiredAttachments.map(formatAttachmentType).join(", ")}`,
+                tTasks("uploadRequiredFiles", {
+                  files: missingRequiredAttachments.map(formatAttachmentType).join(", "),
+                }),
               );
               return;
             }
@@ -169,7 +172,18 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       default:
         return null;
     }
-  }, [claimMutation, completeMutation, formValues, missingRequiredAttachments, missingRequiredFields, startMutation, task, uploadedAttachments]);
+  }, [
+    claimMutation,
+    completeMutation,
+    formValues,
+    missingRequiredAttachments,
+    missingRequiredFields,
+    startMutation,
+    tActions,
+    tTasks,
+    task,
+    uploadedAttachments,
+  ]);
 
   if (taskQuery.isLoading) {
     return <TaskDetailSkeleton />;
@@ -179,11 +193,11 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
     return (
       <div className="px-4 pt-6 lg:px-6">
         <Alert status="error">
-          <AlertTitle>Task not found</AlertTitle>
+          <AlertTitle>{tTasks("notFound")}</AlertTitle>
           <AlertDescription>
             {taskQuery.error instanceof Error
               ? taskQuery.error.message
-              : "This task is unavailable."}
+              : tTasks("notFound")}
           </AlertDescription>
         </Alert>
       </div>
@@ -203,7 +217,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         [type]: [...(current[type] ?? []), attachment],
       }));
     } catch (error) {
-      setActionError(getErrorMessage(error));
+      setActionError(getErrorMessage(error, tTasks("genericError")));
     } finally {
       setUploadingType(null);
     }
@@ -213,7 +227,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
     <div className="px-4 pt-6 lg:px-6" dir="auto">
       <div className="mb-4">
         <Link href="/my-tasks" className="text-sm text-text-secondary hover:text-text-primary">
-          ← Back to My Tasks
+          ← {tTasks("backToMyTasks")}
         </Link>
       </div>
 
@@ -275,7 +289,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
               )}
             >
               {formatDeadlineInWords(task.due_at, task.is_overdue)}
-              {task.is_overdue ? " · Overdue" : ""}
+              {task.is_overdue ? ` · ${tTasks("overdue")}` : ""}
             </span>
           </div>
         </CardHeader>
@@ -283,7 +297,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {task.instructions ? (
         <Card className="mb-4">
-          <CardTitle className="mb-2 text-lg">What you need to do</CardTitle>
+          <CardTitle className="mb-2 text-lg">{tTasks("instructions")}</CardTitle>
           <CardDescription className="whitespace-pre-wrap text-text-primary">
             {task.instructions}
           </CardDescription>
@@ -410,7 +424,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {actionError ? (
         <Alert status="error" className="mb-4">
-          <AlertTitle>Action failed</AlertTitle>
+          <AlertTitle>{tTasks("actionFailed")}</AlertTitle>
           <AlertDescription>{actionError}</AlertDescription>
         </Alert>
       ) : null}
@@ -431,10 +445,14 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
           task.status === "in_progress" ? (
             <p className="text-sm text-text-secondary">
               {missingRequiredFields.length > 0
-                ? `Required fields: ${missingRequiredFields.map((f) => f.label).join(", ")}`
+                ? tTasks("requiredFieldsLabel", {
+                    fields: missingRequiredFields.map((f) => f.label).join(", "),
+                  })
                 : null}
               {missingRequiredAttachments.length > 0
-                ? `Required files: ${missingRequiredAttachments.map(formatAttachmentType).join(", ")}`
+                ? tTasks("requiredFilesLabel", {
+                    files: missingRequiredAttachments.map(formatAttachmentType).join(", "),
+                  })
                 : null}
             </p>
           ) : null}
@@ -446,7 +464,7 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             isDisabled={isActionPending}
             onPress={primaryAction.action}
           >
-            {isActionPending ? "Working…" : primaryAction.label}
+            {isActionPending ? tTasks("working") : primaryAction.label}
           </Button>
           </div>
         </div>
@@ -456,8 +474,8 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {!handoverMessage && !primaryAction && task.status === "completed" ? (
         <Alert status="success">
-          <AlertTitle>Completed</AlertTitle>
-          <AlertDescription>This task is already completed.</AlertDescription>
+          <AlertTitle>{tActions("complete")}</AlertTitle>
+          <AlertDescription>{tTasks("alreadyCompleted")}</AlertDescription>
         </Alert>
       ) : null}
     </div>
@@ -609,7 +627,7 @@ function buildHandoverMessage(createdTasks: CreatedTask[]): string {
   return `Done. ${department} now has "${created.title}"${dueText ? `, ${dueText}` : ""}.`;
 }
 
-function getErrorMessage(error: unknown): string {
+function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     if (error.errors) {
       const firstError = Object.values(error.errors)[0]?.[0];
@@ -625,5 +643,5 @@ function getErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Something went wrong.";
+  return fallback;
 }
