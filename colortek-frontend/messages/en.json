@@ -36,7 +36,8 @@
     "next": "Next",
     "language": "Language",
     "english": "English",
-    "arabic": "العربية"
+    "arabic": "العربية",
+    "logout": "Logout"
   },
   "states": {
     "loading": "Loading…",

@@ -36,7 +36,8 @@
     "next": "التالي",
     "language": "اللغة",
     "english": "English",
-    "arabic": "العربية"
+    "arabic": "العربية",
+    "logout": "تسجيل الخروج"
   },
   "states": {
     "loading": "جاري التحميل…",
