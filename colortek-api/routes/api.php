@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\JournalController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OptionsController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PeopleHoursController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\SampleController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -138,6 +139,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('dashboard/workshop', [DashboardController::class, 'workshop']);
         Route::get('dashboard/site', [DashboardController::class, 'site']);
         Route::get('dashboard/samples', [DashboardController::class, 'samples']);
+        Route::get('people-hours', PeopleHoursController::class);
         Route::get('search', SearchController::class);
         Route::prefix('admin')->group(function (): void {
             Route::get('settings', [AdminSettingController::class, 'index']);
