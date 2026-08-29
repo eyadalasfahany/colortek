@@ -21,6 +21,7 @@ final class ProjectUpdateRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:200'],
+            'sales_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'responsible_user_id' => ['nullable', 'integer', 'exists:users,id'],
             // Validated against the enums: an unknown value used to be stored
             // and then blow up when ProjectStage::from() ran on the next read.

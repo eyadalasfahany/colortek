@@ -211,7 +211,12 @@
     "documentName": "الملف",
     "documentType": "النوع",
     "documentSource": "من",
-    "documentUploadedBy": "رفعه"
+    "documentUploadedBy": "رفعه",
+    "team": "الفريق",
+    "teamHint": "أعمال الورشة والتنطيف والموقع تُسنَد لكل مهمة على حدة — استخدم إعادة الإسناد في المهمة نفسها. هذا القسم لدورين على مستوى المشروع فقط.",
+    "salesperson": "مندوب المبيعات",
+    "responsibleUser": "المسؤول عن المشروع",
+    "unassigned": "غير مُسنَد"
   },
   "samples": {
     "title": "العينات",

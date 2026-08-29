@@ -46,7 +46,7 @@ final class ProjectService
 
             $this->auditLogger->log($project, 'created', $user, newValues: ['reference' => $project->reference]);
 
-            return $project->load(['client', 'salesUser']);
+            return $project->load(['client', 'salesUser', 'responsibleUser']);
         });
     }
 
@@ -79,7 +79,7 @@ final class ProjectService
                 ));
             }
 
-            return $project->fresh(['client', 'salesUser']) ?? $project;
+            return $project->fresh(['client', 'salesUser', 'responsibleUser']) ?? $project;
         });
     }
 
@@ -104,7 +104,7 @@ final class ProjectService
 
             event(new ProjectCompleted($project->fresh(), $user));
 
-            return $project->fresh(['client', 'salesUser']) ?? $project;
+            return $project->fresh(['client', 'salesUser', 'responsibleUser']) ?? $project;
         });
     }
 
@@ -122,7 +122,7 @@ final class ProjectService
 
             $this->auditLogger->log($project, 'cancelled', $user, reason: $reason);
 
-            return $project->fresh(['client', 'salesUser']) ?? $project;
+            return $project->fresh(['client', 'salesUser', 'responsibleUser']) ?? $project;
         });
     }
 

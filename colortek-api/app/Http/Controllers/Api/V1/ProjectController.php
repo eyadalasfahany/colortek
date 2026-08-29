@@ -33,7 +33,7 @@ final class ProjectController extends Controller
     use LoadsRequestedRelations;
 
     /** @var list<string> */
-    private const DETAIL_RELATIONS = ['client', 'salesUser', 'quotation', 'tasks.department'];
+    private const DETAIL_RELATIONS = ['client', 'salesUser', 'responsibleUser', 'quotation', 'tasks.department'];
 
     public function __construct(
         private ProjectFilter $pf,
@@ -103,7 +103,7 @@ final class ProjectController extends Controller
 
     public function showByReference(Request $request, string $ref): JsonResponse
     {
-        $project = Project::with(['client', 'salesUser', 'quotation'])->where('reference', $ref)->firstOrFail();
+        $project = Project::with(['client', 'salesUser', 'responsibleUser', 'quotation'])->where('reference', $ref)->firstOrFail();
         $this->authorize('view', $project);
 
         return response()->json(['data' => ProjectResource::make($project)]);

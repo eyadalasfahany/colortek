@@ -133,6 +133,8 @@ export async function updateProject(
     status?: string;
     name?: string;
     site_ready?: boolean;
+    sales_user_id?: number | null;
+    responsible_user_id?: number | null;
   },
 ): Promise<ProjectDetail> {
   const data = unwrapData<unknown>(

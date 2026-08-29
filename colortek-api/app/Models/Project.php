@@ -30,6 +30,7 @@ final class Project extends Model
         'stage',
         'status',
         'sales_user_id',
+        'responsible_user_id',
         'block_all_when_site_not_ready',
         'site_ready',
         'sla_profile',
@@ -61,6 +62,12 @@ final class Project extends Model
     public function salesUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sales_user_id');
+    }
+
+    /** Project manager once execution starts. `03-data-model.md` §Projects. */
+    public function responsibleUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'responsible_user_id');
     }
 
     /** @return HasMany<Task, $this> */

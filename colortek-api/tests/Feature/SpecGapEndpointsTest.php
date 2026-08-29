@@ -19,7 +19,7 @@ beforeEach(function (): void {
     $this->seed(ReferenceSeeder::class);
 });
 
-function siteEngineer(): User
+function actingAsSiteEngineer(): User
 {
     $user = User::factory()->create();
     $user->assignRole('site_engineer');
@@ -30,7 +30,7 @@ function siteEngineer(): User
 
 it('raises a corrective action by hand', function (): void {
     $this->seed(SiteVisitWorkflowSeeder::class);
-    siteEngineer();
+    actingAsSiteEngineer();
     $visit = SiteVisit::factory()->create();
 
     $this->postJson('/api/v1/corrective-actions', [
@@ -49,7 +49,7 @@ it('routes a client corrective action to sales', function (): void {
     // 07-workflows/05: client, contractor and other_trade all go to Sales,
     // because Sales is who talks to the client.
     $this->seed(SiteVisitWorkflowSeeder::class);
-    siteEngineer();
+    actingAsSiteEngineer();
     $visit = SiteVisit::factory()->create();
 
     $response = $this->postJson('/api/v1/corrective-actions', [
@@ -67,7 +67,7 @@ it('routes a client corrective action to sales', function (): void {
 
 it('routes a colortek corrective action to the named department', function (): void {
     $this->seed(SiteVisitWorkflowSeeder::class);
-    siteEngineer();
+    actingAsSiteEngineer();
     $visit = SiteVisit::factory()->create();
     $workshop = Department::query()->where('code', 'workshop')->value('id');
 
@@ -84,7 +84,7 @@ it('routes a colortek corrective action to the named department', function (): v
 });
 
 it('rejects an unknown responsible party', function (): void {
-    siteEngineer();
+    actingAsSiteEngineer();
     $visit = SiteVisit::factory()->create();
 
     $this->postJson('/api/v1/corrective-actions', [

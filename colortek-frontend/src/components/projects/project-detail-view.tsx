@@ -4,6 +4,7 @@ import { ActivityFeed } from "@/components/activity/activity-feed";
 import PermissionGate from "@/components/auth/permission-gate";
 import ProjectDocumentsPanel from "@/components/projects/project-documents-panel";
 import ProjectStageContext from "@/components/projects/project-stage-context";
+import ProjectTeamPanel from "@/components/projects/project-team-panel";
 import ProjectWorkflowActions from "@/components/projects/project-workflow-actions";
 import ProjectStageControls from "@/components/projects/project-stage-controls";
 import {
@@ -164,6 +165,10 @@ function ProjectDetailContent({ reference }: { reference: string }) {
 
           <div className="mt-4 border-t border-card-border pt-4">
             <ProjectWorkflowActions project={project} />
+          </div>
+
+          <div className="mt-4 border-t border-card-border pt-4">
+            <ProjectTeamPanel project={project} />
           </div>
 
           <div className="mt-4 border-t border-card-border pt-4">

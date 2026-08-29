@@ -7,6 +7,7 @@ export interface ProjectSummary {
   site_ready: boolean;
   client_name?: string | null;
   sales_user?: { id: number; name: string } | null;
+  responsible_user?: { id: number; name: string } | null;
 }
 
 export interface ProjectDetail extends ProjectSummary {

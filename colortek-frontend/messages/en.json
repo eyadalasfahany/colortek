@@ -211,7 +211,12 @@
     "documentName": "File",
     "documentType": "Type",
     "documentSource": "From",
-    "documentUploadedBy": "Uploaded by"
+    "documentUploadedBy": "Uploaded by",
+    "team": "Team",
+    "teamHint": "Workshop, tinting, and site work are assigned per task — use Reassign on the task itself. This is for the two project-level roles.",
+    "salesperson": "Salesperson",
+    "responsibleUser": "Responsible user (project manager)",
+    "unassigned": "Unassigned"
   },
   "samples": {
     "title": "Samples",
