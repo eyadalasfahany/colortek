@@ -14,13 +14,20 @@ import { TextArea } from "@/components/tailgrids/core/text-area";
 import {
   addTaskComment,
   blockTask,
+  reassignTask,
   pauseTask,
   releaseTask,
   resumeTask,
   unblockTask,
 } from "@/services/taskService";
 import type { TaskDetail } from "@/types/api";
-import { useMutation } from "@tanstack/react-query";
+import {
+  getBlockerCategoryOptions,
+  getUserOptions,
+} from "@/services/optionsService";
+import { usePermissions } from "@/hooks/use-permissions";
+import { queryKeys } from "@/lib/queryKeys";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -29,7 +36,12 @@ interface TaskActionsBarProps {
   isActionPending: boolean;
   onSuccess: () => void;
   onError: (message: string) => void;
-  onCommentAdded: (comment: { id: string; body: string; created_at: string; author?: string }) => void;
+  onCommentAdded: (comment: {
+    id: string;
+    body: string;
+    created_at: string;
+    author?: string;
+  }) => void;
 }
 
 export function TaskActionsBar({
@@ -43,26 +55,67 @@ export function TaskActionsBar({
   const tTasks = useTranslations("tasks");
   const tCommon = useTranslations("common");
   const [blockOpen, setBlockOpen] = useState(false);
+  const [unblockOpen, setUnblockOpen] = useState(false);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [assigneeId, setAssigneeId] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
   const [blockReason, setBlockReason] = useState("");
-  const [blockCategoryId, setBlockCategoryId] = useState("1");
+  const [resolutionNote, setResolutionNote] = useState("");
+  // Categories come from GET /options/blocker-categories — the previous
+  // hardcoded list had labels that did not match the real rows, so every
+  // choice recorded the wrong category.
+  const blockerCategoriesQuery = useQuery({
+    queryKey: queryKeys.options.blockerCategories(),
+    queryFn: getBlockerCategoryOptions,
+  });
+  const blockerCategories = blockerCategoriesQuery.data ?? [];
+
+  // Only people in the task's own department can sensibly pick it up.
+  const { can } = usePermissions();
+  const assigneesQuery = useQuery({
+    queryKey: queryKeys.options.users(task.department?.id),
+    queryFn: () => getUserOptions(task.department?.id),
+    enabled: reassignOpen,
+  });
+  const [blockCategoryId, setBlockCategoryId] = useState("");
   const [commentBody, setCommentBody] = useState("");
 
   const mutationOptions = {
     onSuccess: () => {
       onSuccess();
       setBlockOpen(false);
+      setUnblockOpen(false);
       setCommentOpen(false);
       setBlockReason("");
+      setBlockCategoryId("");
+      setResolutionNote("");
+      setReassignOpen(false);
+      setAssigneeId("");
       setCommentBody("");
     },
     onError: (error: unknown) => onError(getErrorMessage(error)),
   };
 
-  const releaseMutation = useMutation({ mutationFn: () => releaseTask(task.id), ...mutationOptions });
-  const pauseMutation = useMutation({ mutationFn: () => pauseTask(task.id), ...mutationOptions });
-  const resumeMutation = useMutation({ mutationFn: () => resumeTask(task.id), ...mutationOptions });
-  const unblockMutation = useMutation({ mutationFn: () => unblockTask(task.id), ...mutationOptions });
+  const releaseMutation = useMutation({
+    mutationFn: () => releaseTask(task.id),
+    ...mutationOptions,
+  });
+  const pauseMutation = useMutation({
+    mutationFn: () => pauseTask(task.id),
+    ...mutationOptions,
+  });
+  const resumeMutation = useMutation({
+    mutationFn: () => resumeTask(task.id),
+    ...mutationOptions,
+  });
+  const unblockMutation = useMutation({
+    mutationFn: () => unblockTask(task.id, resolutionNote),
+    ...mutationOptions,
+  });
+  const reassignMutation = useMutation({
+    mutationFn: () => reassignTask(task.id, Number(assigneeId)),
+    ...mutationOptions,
+  });
   const blockMutation = useMutation({
     mutationFn: () =>
       blockTask(task.id, {
@@ -92,16 +145,43 @@ export function TaskActionsBar({
     resumeMutation.isPending ||
     unblockMutation.isPending ||
     blockMutation.isPending ||
+    reassignMutation.isPending ||
     commentMutation.isPending;
 
   const secondaryActions = [];
 
+  if (can("task.reassign")) {
+    secondaryActions.push(
+      <Button
+        key="reassign"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setReassignOpen(true)}
+      >
+        {t("reassign")}
+      </Button>,
+    );
+  }
+
   if (task.status === "claimed") {
     secondaryActions.push(
-      <Button key="release" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => releaseMutation.mutate()}>
+      <Button
+        key="release"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => releaseMutation.mutate()}
+      >
         {t("release")}
       </Button>,
-      <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
+      <Button
+        key="block"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setBlockOpen(true)}
+      >
         {t("block")}
       </Button>,
     );
@@ -109,13 +189,31 @@ export function TaskActionsBar({
 
   if (task.status === "in_progress") {
     secondaryActions.push(
-      <Button key="pause" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => pauseMutation.mutate()}>
+      <Button
+        key="pause"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => pauseMutation.mutate()}
+      >
         {t("pause")}
       </Button>,
-      <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
+      <Button
+        key="block"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setBlockOpen(true)}
+      >
         {t("block")}
       </Button>,
-      <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
+      <Button
+        key="comment"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setCommentOpen(true)}
+      >
         {t("comment")}
       </Button>,
     );
@@ -123,7 +221,13 @@ export function TaskActionsBar({
 
   if (task.status === "paused") {
     secondaryActions.push(
-      <Button key="block" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setBlockOpen(true)}>
+      <Button
+        key="block"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setBlockOpen(true)}
+      >
         {t("block")}
       </Button>,
     );
@@ -131,7 +235,13 @@ export function TaskActionsBar({
 
   if (task.status === "blocked") {
     secondaryActions.push(
-      <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
+      <Button
+        key="comment"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setCommentOpen(true)}
+      >
         {t("comment")}
       </Button>,
     );
@@ -139,7 +249,13 @@ export function TaskActionsBar({
 
   if (["waiting", "pending"].includes(task.status)) {
     secondaryActions.push(
-      <Button key="comment" variant="ghost" appearance="outline" isDisabled={pending} onPress={() => setCommentOpen(true)}>
+      <Button
+        key="comment"
+        variant="ghost"
+        appearance="outline"
+        isDisabled={pending}
+        onPress={() => setCommentOpen(true)}
+      >
         {t("comment")}
       </Button>,
     );
@@ -153,7 +269,12 @@ export function TaskActionsBar({
 
       {task.status === "paused" ? (
         <div className="mb-4">
-          <Button variant="primary" appearance="fill" isDisabled={pending} onPress={() => resumeMutation.mutate()}>
+          <Button
+            variant="primary"
+            appearance="fill"
+            isDisabled={pending}
+            onPress={() => resumeMutation.mutate()}
+          >
             {t("resume")}
           </Button>
         </div>
@@ -161,7 +282,12 @@ export function TaskActionsBar({
 
       {task.status === "blocked" ? (
         <div className="mb-4">
-          <Button variant="primary" appearance="fill" isDisabled={pending} onPress={() => unblockMutation.mutate()}>
+          <Button
+            variant="primary"
+            appearance="fill"
+            isDisabled={pending}
+            onPress={() => setUnblockOpen(true)}
+          >
             {t("unblock")}
           </Button>
         </div>
@@ -173,37 +299,96 @@ export function TaskActionsBar({
           <DialogDescription>{tTasks("blockReason")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3 py-0">
-            <div>
-              <Label htmlFor="block-category">{tTasks("blockCategory")}</Label>
-              <select
-                id="block-category"
-                value={blockCategoryId}
-                onChange={(e) => setBlockCategoryId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-card-border px-3 py-2 text-sm"
-              >
-                <option value="1">Missing material</option>
-                <option value="2">Waiting on client</option>
-                <option value="3">Equipment issue</option>
-                <option value="4">Other</option>
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="block-reason">{tTasks("blockReason")}</Label>
-              <TextArea
-                id="block-reason"
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-                className="mt-1 min-h-24"
-              />
-            </div>
-            <Button
-              variant="primary"
-              appearance="fill"
-              isDisabled={!blockReason.trim() || pending}
-              onPress={() => blockMutation.mutate()}
+          <div>
+            <Label htmlFor="block-category">{tTasks("blockCategory")}</Label>
+            <select
+              id="block-category"
+              value={blockCategoryId}
+              onChange={(e) => setBlockCategoryId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-card-border px-3 py-2 text-sm"
             >
-              {t("block")}
-            </Button>
+              <option value="">{tCommon("select")}</option>
+              {blockerCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="block-reason">{tTasks("blockReason")}</Label>
+            <TextArea
+              id="block-reason"
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+              className="mt-1 min-h-24"
+            />
+          </div>
+          <Button
+            variant="primary"
+            appearance="fill"
+            isDisabled={!blockReason.trim() || pending}
+            onPress={() => blockMutation.mutate()}
+          >
+            {t("block")}
+          </Button>
+        </DialogBody>
+      </Dialog>
+
+      <Dialog isOpen={unblockOpen} onOpenChange={setUnblockOpen}>
+        <DialogHeader>
+          <DialogTitle>{t("unblock")}</DialogTitle>
+          <DialogDescription>{tTasks("unblockDescription")}</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="py-0">
+          <Label htmlFor="unblock-note">{tTasks("unblockNote")}</Label>
+          <TextArea
+            id="unblock-note"
+            value={resolutionNote}
+            onChange={(e) => setResolutionNote(e.target.value)}
+            className="mt-1 min-h-24"
+          />
+          <Button
+            variant="primary"
+            appearance="fill"
+            className="mt-3"
+            isDisabled={!resolutionNote.trim() || pending}
+            onPress={() => unblockMutation.mutate()}
+          >
+            {t("unblock")}
+          </Button>
+        </DialogBody>
+      </Dialog>
+
+      <Dialog isOpen={reassignOpen} onOpenChange={setReassignOpen}>
+        <DialogHeader>
+          <DialogTitle>{t("reassign")}</DialogTitle>
+          <DialogDescription>{tTasks("reassignDescription")}</DialogDescription>
+        </DialogHeader>
+        <DialogBody className="py-0">
+          <Label htmlFor="assignee">{tTasks("assignee")}</Label>
+          <select
+            id="assignee"
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-card-border px-3 py-2 text-sm"
+          >
+            <option value="">{tCommon("select")}</option>
+            {(assigneesQuery.data ?? []).map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.label}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="primary"
+            appearance="fill"
+            className="mt-3"
+            isDisabled={assigneeId === "" || pending}
+            onPress={() => reassignMutation.mutate()}
+          >
+            {t("reassign")}
+          </Button>
         </DialogBody>
       </Dialog>
 

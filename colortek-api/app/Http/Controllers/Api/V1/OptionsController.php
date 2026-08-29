@@ -49,8 +49,22 @@ final class OptionsController extends Controller
 
     public function users(): JsonResponse
     {
+        // `department_id` lets the caller narrow to the people who actually work
+        // that queue — e.g. reassigning a workshop task to a workshop user.
+        $departmentId = request()->integer('department_id');
+
         return response()->json([
-            'data' => User::query()->where('active', true)->orderBy('name')->get(['id', 'name', 'email']),
+            'data' => User::query()
+                ->where('active', true)
+                ->when(
+                    $departmentId > 0,
+                    fn ($query) => $query->whereHas(
+                        'departments',
+                        fn ($d) => $d->where('departments.id', $departmentId),
+                    ),
+                )
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']),
         ]);
     }
 

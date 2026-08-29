@@ -56,6 +56,16 @@ final class ProjectService
         return DB::transaction(function () use ($project, $data, $user): Project {
             $old = $project->only(array_keys($data));
             $previousStage = $project->stage;
+            // `status` is a plain string column; normalise so an enum instance
+            // from a validated request is stored as its value.
+            if (isset($data['status'])) {
+                $data['status'] = $data['status'] instanceof ProjectStatus
+                    ? $data['status']->value
+                    : (string) $data['status'];
+            }
+            if (isset($data['stage']) && $data['stage'] instanceof ProjectStage) {
+                $data['stage'] = $data['stage']->value;
+            }
             $project->update($data);
 
             $this->auditLogger->log($project, 'updated', $user, oldValues: $old, newValues: $project->only(array_keys($data)));

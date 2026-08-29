@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 
 export function usePermissions() {
   const { user } = useAuth();
-  const permissions = user?.permissions ?? [];
+  const permissions = useMemo(() => user?.permissions ?? [], [user?.permissions]);
 
   const can = useCallback(
     (permission: string) => permissions.includes(permission),

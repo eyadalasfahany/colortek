@@ -9,7 +9,13 @@ export async function globalSearch(query: string): Promise<SearchResults> {
   const data = response.data;
 
   if (!isSearchResults(data)) {
-    return { projects: [], tasks: [], clients: [], samples: [], site_visits: [] };
+    return {
+      projects: [],
+      tasks: [],
+      clients: [],
+      samples: [],
+      site_visits: [],
+    };
   }
 
   return data;

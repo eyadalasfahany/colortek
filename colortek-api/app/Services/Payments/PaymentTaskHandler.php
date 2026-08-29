@@ -11,6 +11,8 @@ use App\Enums\PaymentStatus;
 use App\Enums\ProjectStage;
 use App\Enums\QuotationStatus;
 use App\Exceptions\TaskNotReadyToComplete;
+use App\Gateways\Odoo\Data\PaymentData;
+use App\Gateways\Odoo\OdooGateway;
 use App\Models\Attachment;
 use App\Models\Journal;
 use App\Models\Payment;
@@ -27,6 +29,7 @@ final class PaymentTaskHandler
         private JournalService $journalService,
         private JournalWorkflowService $journalWorkflowService,
         private ActivityRecorder $activityRecorder,
+        private OdooGateway $odoo,
     ) {}
 
     /**
@@ -123,6 +126,12 @@ final class PaymentTaskHandler
 
             $this->linkAttachments($proofIds, $payment);
         });
+
+        // specs/13 §1 rule 3: pushed after commit so an ERP problem cannot roll
+        // back a confirmed payment or block the queue.
+        DB::afterCommit(fn () => $this->odoo->pushPaymentConfirmation(
+            PaymentData::fromModel($payment->fresh()),
+        ));
 
         $this->activityRecorder->record(
             type: 'payment.confirmed',

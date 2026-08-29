@@ -1,3 +1,5 @@
+import type { WorkflowNextAction } from "@/types/projects";
+
 export interface DashboardKpi {
   key: string;
   label: string;
@@ -13,7 +15,7 @@ export interface ControlRoomProject {
   sales_user?: string | null;
   stage: string;
   site_ready: boolean;
-  next_action?: string | null;
+  next_action?: WorkflowNextAction | null;
 }
 
 export interface ControlRoomData {

@@ -19,6 +19,11 @@ final class CorrectiveActionPolicy
         return $u->can('site.view');
     }
 
+    public function create(User $u): bool
+    {
+        return $u->can('site.corrective_action_manage');
+    }
+
     public function update(User $u, CorrectiveAction $a): bool
     {
         return $u->can('site.corrective_action_manage');

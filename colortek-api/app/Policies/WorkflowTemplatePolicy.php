@@ -19,6 +19,11 @@ final class WorkflowTemplatePolicy
         return $u->can('workflow.view');
     }
 
+    public function create(User $u): bool
+    {
+        return $u->can('workflow.manage');
+    }
+
     public function update(User $u, WorkflowTemplate $t): bool
     {
         return $u->can('workflow.manage') && $t->published_at === null;

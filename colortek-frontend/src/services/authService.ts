@@ -13,8 +13,13 @@ export interface LoginCredentials {
   password: string;
 }
 
-export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
-  const response = await axiosInstance.post<unknown>("/auth/login", credentials);
+export async function login(
+  credentials: LoginCredentials,
+): Promise<LoginResponse> {
+  const response = await axiosInstance.post<unknown>(
+    "/auth/login",
+    credentials,
+  );
   const data = unwrapData<unknown>(response);
 
   if (!isLoginResponse(data)) {

@@ -37,7 +37,16 @@ export const queryKeys = {
     projects: () => ["options", "projects"] as const,
     departments: () => ["options", "departments"] as const,
     employees: () => ["options", "employees"] as const,
-    users: () => ["options", "users"] as const,
+    users: (departmentId?: number) => ["options", "users", departmentId ?? null] as const,
+    clients: () => ["options", "clients"] as const,
+    blockerCategories: () => ["options", "blocker-categories"] as const,
+  },
+  enums: { options: (name: string) => ["enums", name] as const },
+  clients: {
+    list: (params?: Record<string, unknown>) => ["clients", "list", params] as const,
+  },
+  quotations: {
+    list: (params?: Record<string, unknown>) => ["quotations", "list", params] as const,
   },
   dashboard: {
     controlRoom: () => ["dashboard", "control-room"] as const,

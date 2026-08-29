@@ -1,10 +1,19 @@
 "use client";
 
 import { ApiError } from "@/config/axios";
-import { Alert, AlertDescription, AlertTitle } from "@/components/tailgrids/core/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/tailgrids/core/alert";
 import { Badge } from "@/components/tailgrids/core/badge";
 import { Button } from "@/components/tailgrids/core/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/tailgrids/core/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/tailgrids/core/card";
 import { Input } from "@/components/tailgrids/core/input";
 import { Label } from "@/components/tailgrids/core/label";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
@@ -17,7 +26,10 @@ import { SampleSubjectPanel } from "@/components/tasks/sample-subject-panel";
 import { TaskActionsBar } from "@/components/tasks/task-actions-bar";
 import { TaskActivitySection } from "@/components/tasks/task-activity-section";
 import { queryKeys } from "@/lib/queryKeys";
-import { uploadAttachment, type UploadedAttachment } from "@/services/attachmentService";
+import {
+  uploadAttachment,
+  type UploadedAttachment,
+} from "@/services/attachmentService";
 import {
   claimTask,
   completeTask,
@@ -58,9 +70,6 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [handoverMessage, setHandoverMessage] = useState<string | null>(null);
-  const [comments, setComments] = useState<
-    Array<{ id: string; body: string; created_at: string; author?: string }>
-  >([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const taskQuery = useQuery({
@@ -69,20 +78,24 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   });
 
   const invalidateTaskQueries = async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(taskId) });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.tasks.detail(taskId),
+    });
     await queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all() });
   };
 
   const claimMutation = useMutation({
     mutationFn: claimTask,
     onSuccess: invalidateTaskQueries,
-    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
+    onError: (error) =>
+      setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const startMutation = useMutation({
     mutationFn: startTask,
     onSuccess: invalidateTaskQueries,
-    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
+    onError: (error) =>
+      setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const completeMutation = useMutation({
@@ -100,15 +113,22 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       setHandoverMessage(message);
       void invalidateTaskQueries();
     },
-    onError: (error) => setActionError(getErrorMessage(error, tTasks("genericError"))),
+    onError: (error) =>
+      setActionError(getErrorMessage(error, tTasks("genericError"))),
   });
 
   const task = taskQuery.data;
   const taskCode = task ? resolveTaskCode(task) : null;
-  const paymentSubject = task?.subject && isPaymentSubjectContext(task.subject) ? task.subject : null;
-  const sampleSubject = task?.subject && isSampleSubjectContext(task.subject) ? task.subject : null;
+  const paymentSubject =
+    task?.subject && isPaymentSubjectContext(task.subject)
+      ? task.subject
+      : null;
+  const sampleSubject =
+    task?.subject && isSampleSubjectContext(task.subject) ? task.subject : null;
   const isActionPending =
-    claimMutation.isPending || startMutation.isPending || completeMutation.isPending;
+    claimMutation.isPending ||
+    startMutation.isPending ||
+    completeMutation.isPending;
 
   const missingRequiredAttachments = useMemo(() => {
     if (!task?.required_attachment_types?.length) return [];
@@ -131,9 +151,17 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
     switch (task.status) {
       case "ready":
-        return { label: tActions("claim"), action: () => claimMutation.mutate(task.id), disabled: false };
+        return {
+          label: tActions("claim"),
+          action: () => claimMutation.mutate(task.id),
+          disabled: false,
+        };
       case "claimed":
-        return { label: tActions("start"), action: () => startMutation.mutate(task.id), disabled: false };
+        return {
+          label: tActions("start"),
+          action: () => startMutation.mutate(task.id),
+          disabled: false,
+        };
       case "in_progress":
         return {
           label: tActions("complete"),
@@ -142,7 +170,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             if (missingRequiredFields.length > 0) {
               const errors: Record<string, string> = {};
               for (const field of missingRequiredFields) {
-                errors[field.name] = tTasks("fieldRequired", { label: field.label });
+                errors[field.name] = tTasks("fieldRequired", {
+                  label: field.label,
+                });
               }
               setFieldErrors(errors);
               setActionError(
@@ -155,12 +185,17 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             if (missingRequiredAttachments.length > 0) {
               setActionError(
                 tTasks("uploadRequiredFiles", {
-                  files: missingRequiredAttachments.map(formatAttachmentType).join(", "),
+                  files: missingRequiredAttachments
+                    .map(formatAttachmentType)
+                    .join(", "),
                 }),
               );
               return;
             }
-            const fields = buildFieldsPayload(task.form_schema?.fields ?? [], formValues);
+            const fields = buildFieldsPayload(
+              task.form_schema?.fields ?? [],
+              formValues,
+            );
             const attachmentIds = buildAttachmentIds(
               task.required_attachment_types ?? [],
               uploadedAttachments,
@@ -226,7 +261,10 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
   return (
     <div className="px-4 pt-6 lg:px-6" dir="auto">
       <div className="mb-4">
-        <Link href="/my-tasks" className="text-sm text-text-secondary hover:text-text-primary">
+        <Link
+          href="/my-tasks"
+          className="text-sm text-text-secondary hover:text-text-primary"
+        >
           ← {tTasks("backToMyTasks")}
         </Link>
       </div>
@@ -234,7 +272,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
       {handoverMessage ? (
         <Alert status="success" className="mb-6">
           <AlertTitle>Done.</AlertTitle>
-          <AlertDescription>{handoverMessage.replace(/^Done\.\s*/, "")}</AlertDescription>
+          <AlertDescription>
+            {handoverMessage.replace(/^Done\.\s*/, "")}
+          </AlertDescription>
           <div className="mt-4">
             <Button
               variant="primary"
@@ -249,7 +289,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {task.status === "in_progress" && task.started_at ? (
         <Card className="mb-4 border-brand-200 bg-brand-50">
-          <p className="text-sm font-medium text-text-secondary">Timer running</p>
+          <p className="text-sm font-medium text-text-secondary">
+            Timer running
+          </p>
           <p className="text-3xl font-bold text-brand-600">
             {formatElapsedSince(task.started_at)}
           </p>
@@ -266,10 +308,14 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             {task.project ? (
               <CardDescription className="mt-2">
                 {task.project.reference} · {task.project.name}
-                {task.project.client_name ? ` · ${task.project.client_name}` : ""}
+                {task.project.client_name
+                  ? ` · ${task.project.client_name}`
+                  : ""}
               </CardDescription>
             ) : task.project_id ? (
-              <CardDescription className="mt-2">Project #{task.project_id}</CardDescription>
+              <CardDescription className="mt-2">
+                Project #{task.project_id}
+              </CardDescription>
             ) : null}
           </div>
 
@@ -285,7 +331,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
             <span
               className={cn(
                 "text-sm",
-                task.is_overdue ? "font-medium text-error-500" : "text-text-secondary",
+                task.is_overdue
+                  ? "font-medium text-error-500"
+                  : "text-text-secondary",
               )}
             >
               {formatDeadlineInWords(task.due_at, task.is_overdue)}
@@ -297,7 +345,9 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {task.instructions ? (
         <Card className="mb-4">
-          <CardTitle className="mb-2 text-lg">{tTasks("instructions")}</CardTitle>
+          <CardTitle className="mb-2 text-lg">
+            {tTasks("instructions")}
+          </CardTitle>
           <CardDescription className="whitespace-pre-wrap text-text-primary">
             {task.instructions}
           </CardDescription>
@@ -308,34 +358,56 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
 
       {sampleSubject ? <SampleSubjectPanel subject={sampleSubject} /> : null}
 
-      {sampleSubject && taskCode === "reception_register_formula" ? <FormulaRegistrationPanel subject={sampleSubject} /> : null}
+      {sampleSubject && taskCode === "reception_register_formula" ? (
+        <FormulaRegistrationPanel subject={sampleSubject} />
+      ) : null}
 
-      {sampleSubject && taskCode === "sales_get_client_decision" ? <ClientDecisionPanel subject={sampleSubject} /> : null}
+      {sampleSubject && taskCode === "sales_get_client_decision" ? (
+        <ClientDecisionPanel subject={sampleSubject} />
+      ) : null}
 
       {sampleSubject ? (
         <div className="mb-4">
-          <Link href={`/samples/${sampleSubject.reference}`} className="text-sm text-brand-500 hover:text-brand-600">View sample {sampleSubject.reference}</Link>
+          <Link
+            href={`/samples/${sampleSubject.reference}`}
+            className="text-sm text-brand-500 hover:text-brand-600"
+          >
+            View sample {sampleSubject.reference}
+          </Link>
         </div>
       ) : null}
 
       {task.previous_outputs && task.previous_outputs.length > 0 ? (
         <Card className="mb-4">
-          <CardTitle className="mb-4 text-lg">What the last person did</CardTitle>
+          <CardTitle className="mb-4 text-lg">
+            What the last person did
+          </CardTitle>
           <div className="space-y-4">
             {task.previous_outputs.map((output, index) => (
-              <div key={index} className="rounded-lg border border-card-border p-4">
+              <div
+                key={index}
+                className="rounded-lg border border-card-border p-4"
+              >
                 {output.task_title ? (
-                  <p className="text-sm font-medium text-text-primary">{output.task_title}</p>
+                  <p className="text-sm font-medium text-text-primary">
+                    {output.task_title}
+                  </p>
                 ) : null}
                 {output.completed_by ? (
-                  <p className="mt-1 text-sm text-text-secondary">By {output.completed_by}</p>
+                  <p className="mt-1 text-sm text-text-secondary">
+                    By {output.completed_by}
+                  </p>
                 ) : null}
                 {output.fields ? (
                   <dl className="mt-3 grid gap-2 sm:grid-cols-2">
                     {Object.entries(output.fields).map(([key, value]) => (
                       <div key={key}>
-                        <dt className="text-xs uppercase text-text-tertiary">{key}</dt>
-                        <dd className="text-sm text-text-primary">{String(value)}</dd>
+                        <dt className="text-xs uppercase text-text-tertiary">
+                          {key}
+                        </dt>
+                        <dd className="text-sm text-text-primary">
+                          {String(value)}
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -358,7 +430,10 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
                 value={formValues[field.name] ?? ""}
                 error={fieldErrors[field.name]}
                 onChange={(value) =>
-                  setFormValues((current) => ({ ...current, [field.name]: value }))
+                  setFormValues((current) => ({
+                    ...current,
+                    [field.name]: value,
+                  }))
                 }
               />
             ))}
@@ -366,7 +441,8 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
         </Card>
       ) : null}
 
-      {task.required_attachment_types && task.required_attachment_types.length > 0 ? (
+      {task.required_attachment_types &&
+      task.required_attachment_types.length > 0 ? (
         <Card className="mb-4">
           <CardTitle className="mb-4 text-lg">Files</CardTitle>
           <ul className="space-y-3">
@@ -380,8 +456,16 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
                   className="rounded-lg border border-card-border px-3 py-3 text-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-text-primary">{formatAttachmentType(type)}</span>
-                    <span className={uploads.length > 0 ? "text-success-500" : "text-error-500"}>
+                    <span className="text-text-primary">
+                      {formatAttachmentType(type)}
+                    </span>
+                    <span
+                      className={
+                        uploads.length > 0
+                          ? "text-success-500"
+                          : "text-error-500"
+                      }
+                    >
                       {uploads.length > 0 ? "Uploaded" : "Required"}
                     </span>
                   </div>
@@ -435,42 +519,47 @@ export default function TaskDetailView({ taskId }: TaskDetailViewProps) {
           isActionPending={isActionPending}
           onSuccess={() => void invalidateTaskQueries()}
           onError={setActionError}
-          onCommentAdded={(comment) => setComments((current) => [comment, ...current])}
+          onCommentAdded={() => void invalidateTaskQueries()}
         />
       ) : null}
 
       {!handoverMessage && primaryAction ? (
         <div className="flex flex-col gap-2">
-          {(missingRequiredAttachments.length > 0 || missingRequiredFields.length > 0) &&
+          {(missingRequiredAttachments.length > 0 ||
+            missingRequiredFields.length > 0) &&
           task.status === "in_progress" ? (
             <p className="text-sm text-text-secondary">
               {missingRequiredFields.length > 0
                 ? tTasks("requiredFieldsLabel", {
-                    fields: missingRequiredFields.map((f) => f.label).join(", "),
+                    fields: missingRequiredFields
+                      .map((f) => f.label)
+                      .join(", "),
                   })
                 : null}
               {missingRequiredAttachments.length > 0
                 ? tTasks("requiredFilesLabel", {
-                    files: missingRequiredAttachments.map(formatAttachmentType).join(", "),
+                    files: missingRequiredAttachments
+                      .map(formatAttachmentType)
+                      .join(", "),
                   })
                 : null}
             </p>
           ) : null}
           <div className="flex gap-3">
-          <Button
-            variant="primary"
-            appearance="fill"
-            size="lg"
-            isDisabled={isActionPending}
-            onPress={primaryAction.action}
-          >
-            {isActionPending ? tTasks("working") : primaryAction.label}
-          </Button>
+            <Button
+              variant="primary"
+              appearance="fill"
+              size="lg"
+              isDisabled={isActionPending}
+              onPress={primaryAction.action}
+            >
+              {isActionPending ? tTasks("working") : primaryAction.label}
+            </Button>
           </div>
         </div>
       ) : null}
 
-      <TaskActivitySection task={task} comments={comments} />
+      <TaskActivitySection task={task} comments={task.comments ?? []} />
 
       {!handoverMessage && !primaryAction && task.status === "completed" ? (
         <Alert status="success">
@@ -503,8 +592,18 @@ function DynamicField({
     </Label>
   );
 
-  if (field.type === "employee" || (taskCode === "tinting_author_formula" && field.name === "author_employee_id")) {
-    return <EmployeePickerField value={value} onChange={onChange} required={field.required} />;
+  if (
+    field.type === "employee" ||
+    (taskCode === "tinting_author_formula" &&
+      field.name === "author_employee_id")
+  ) {
+    return (
+      <EmployeePickerField
+        value={value}
+        onChange={onChange}
+        required={field.required}
+      />
+    );
   }
 
   if (field.type === "textarea") {
@@ -523,19 +622,50 @@ function DynamicField({
   if (field.type === "boolean") {
     return (
       <div className="flex items-center gap-2">
-        <input id={field.name} type="checkbox" checked={value === "true"} onChange={(e) => onChange(e.target.checked ? "true" : "false")} className="size-4 rounded border-card-border" />
-        <Label htmlFor={field.name}>{labelText}{field.required ? <span className="text-error-500"> *</span> : null}</Label>
+        <input
+          id={field.name}
+          type="checkbox"
+          checked={value === "true"}
+          onChange={(e) => onChange(e.target.checked ? "true" : "false")}
+          className="size-4 rounded border-card-border"
+        />
+        <Label htmlFor={field.name}>
+          {labelText}
+          {field.required ? <span className="text-error-500"> *</span> : null}
+        </Label>
       </div>
     );
   }
   if (field.type === "select" && field.options) {
     return (
-      <div className="flex flex-col gap-1.5">{label}<select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"><option value="">Select…</option>{field.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
+      <div className="flex flex-col gap-1.5">
+        {label}
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2.5 text-sm"
+        >
+          <option value="">Select…</option>
+          {field.options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
     );
   }
   if (field.type === "date") {
     return (
-      <div className="flex flex-col gap-1.5">{label}<Input type="date" value={value} onChange={(e) => onChange(e.target.value)} className="w-full px-3 py-2.5 text-sm" /></div>
+      <div className="flex flex-col gap-1.5">
+        {label}
+        <Input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-2.5 text-sm"
+        />
+      </div>
     );
   }
   return (
@@ -608,7 +738,12 @@ function buildFieldsPayload(
       continue;
     }
     if (rawValue === undefined || rawValue === "") continue;
-    if (field.type === "number" || field.type === "money" || field.name === "author_employee_id") payload[field.name] = Number(rawValue);
+    if (
+      field.type === "number" ||
+      field.type === "money" ||
+      field.name === "author_employee_id"
+    )
+      payload[field.name] = Number(rawValue);
     else payload[field.name] = rawValue;
   }
 

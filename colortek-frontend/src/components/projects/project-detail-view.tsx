@@ -2,11 +2,28 @@
 
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import PermissionGate from "@/components/auth/permission-gate";
-import { Alert, AlertDescription, AlertTitle } from "@/components/tailgrids/core/alert";
+import ProjectDocumentsPanel from "@/components/projects/project-documents-panel";
+import ProjectStageContext from "@/components/projects/project-stage-context";
+import ProjectWorkflowActions from "@/components/projects/project-workflow-actions";
+import ProjectStageControls from "@/components/projects/project-stage-controls";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/tailgrids/core/alert";
 import { Badge } from "@/components/tailgrids/core/badge";
-import { Card, CardDescription, CardTitle } from "@/components/tailgrids/core/card";
+import {
+  Card,
+  CardDescription,
+  CardTitle,
+} from "@/components/tailgrids/core/card";
 import { Skeleton } from "@/components/tailgrids/core/skeleton";
-import { TabContent, TabList, TabRoot, TabTrigger } from "@/components/tailgrids/core/tabs";
+import {
+  TabContent,
+  TabList,
+  TabRoot,
+  TabTrigger,
+} from "@/components/tailgrids/core/tabs";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   getProjectByReference,
@@ -17,9 +34,15 @@ import {
 import type { ProjectDetail } from "@/types/projects";
 import { formatDeadlineInWords } from "@/utils/task-formatters";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/utils/cn";
 import { Link } from "@/i18n/navigation";
+import { formatEnumLabel } from "@/utils/enum-label";
 
-export default function ProjectDetailView({ reference }: { reference: string }) {
+export default function ProjectDetailView({
+  reference,
+}: {
+  reference: string;
+}) {
   return (
     <PermissionGate permission="project.view">
       <ProjectDetailContent reference={reference} />
@@ -72,13 +95,18 @@ function ProjectDetailContent({ reference }: { reference: string }) {
     );
   }
 
-  const openTasks = (tasksQuery.data?.data ?? []).filter((t) => t.status !== "completed");
+  const openTasks = (tasksQuery.data?.data ?? []).filter(
+    (t) => t.status !== "completed",
+  );
   const nextAction = workflowQuery.data?.next_action;
 
   return (
     <div className="px-4 pt-6 lg:px-6" dir="auto">
       <div className="mb-2">
-        <Link href="/projects" className="text-sm text-text-secondary hover:text-text-primary">
+        <Link
+          href="/projects"
+          className="text-sm text-text-secondary hover:text-text-primary"
+        >
           ← Projects
         </Link>
       </div>
@@ -92,36 +120,61 @@ function ProjectDetailContent({ reference }: { reference: string }) {
             {workflowQuery.data.stages.map((stage) => (
               <div
                 key={stage.key}
-                className="flex min-w-24 flex-col items-center rounded-lg border border-card-border px-2 py-2 text-center text-xs"
+                className={cn(
+                  "flex min-w-24 flex-col items-center rounded-lg border px-2 py-2 text-center text-xs",
+                  stage.active
+                    ? "border-brand-500 bg-brand-50/40"
+                    : "border-card-border",
+                )}
               >
                 <span
                   className={
-                    stage.state === "current"
+                    stage.active
                       ? "font-semibold text-brand-500"
-                      : stage.state === "blocked"
+                      : stage.blocked
                         ? "text-error-500"
-                        : "text-text-secondary"
+                        : stage.completed
+                          ? "text-text-primary"
+                          : "text-text-secondary"
                   }
                 >
                   {stage.label}
                 </span>
                 <span className="mt-1 text-text-tertiary">
-                  {stage.state === "completed"
-                    ? "✓"
-                    : stage.state === "blocked"
-                      ? "⛔"
-                      : stage.state === "current"
-                        ? "●"
+                  {stage.blocked
+                    ? "⛔"
+                    : stage.active
+                      ? "●"
+                      : stage.completed
+                        ? "✓"
                         : "·"}
                 </span>
               </div>
             ))}
           </div>
-          {nextAction ? (
-            <p className="mt-4 text-base font-medium text-text-primary">
-              Next: {nextAction}
-            </p>
-          ) : null}
+          <div className="mt-4 border-t border-card-border pt-4">
+            <ProjectStageContext
+              project={project}
+              stageKey={
+                workflowQuery.data.stages.find((s) => s.active)?.key ??
+                project.stage
+              }
+            />
+          </div>
+
+          <div className="mt-4 border-t border-card-border pt-4">
+            <ProjectWorkflowActions project={project} />
+          </div>
+
+          <div className="mt-4 border-t border-card-border pt-4">
+            <ProjectStageControls
+              project={project}
+              currentStageLabel={
+                workflowQuery.data.stages.find((s) => s.active)?.label ?? null
+              }
+              nextAction={nextAction}
+            />
+          </div>
         </Card>
       ) : workflowQuery.isLoading ? (
         <Skeleton className="mb-4 h-24" />
@@ -131,6 +184,7 @@ function ProjectDetailContent({ reference }: { reference: string }) {
         <TabList>
           <TabTrigger value="tasks">Tasks</TabTrigger>
           <TabTrigger value="payments">Payments</TabTrigger>
+          <TabTrigger value="documents">Documents</TabTrigger>
           <TabTrigger value="activity">Activity</TabTrigger>
         </TabList>
 
@@ -148,17 +202,28 @@ function ProjectDetailContent({ reference }: { reference: string }) {
                     <Card>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                          <p className="font-medium text-text-primary">{task.title}</p>
+                          <p className="font-medium text-text-primary">
+                            {task.title}
+                          </p>
                           <p className="text-sm text-text-secondary">
-                            {task.department?.name ?? "—"} · {task.claimant?.name ?? "Unclaimed"}
+                            {task.department?.name ?? "—"} ·{" "}
+                            {task.claimant?.name ?? "Unclaimed"}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge color={task.status === "blocked" ? "error" : "primary"} size="sm">
+                          <Badge
+                            color={
+                              task.status === "blocked" ? "error" : "primary"
+                            }
+                            size="sm"
+                          >
                             {task.status.replaceAll("_", " ")}
                           </Badge>
                           <span className="text-xs text-text-tertiary">
-                            {formatDeadlineInWords(task.due_at, task.is_overdue)}
+                            {formatDeadlineInWords(
+                              task.due_at,
+                              task.is_overdue,
+                            )}
                           </span>
                         </div>
                       </div>
@@ -170,11 +235,16 @@ function ProjectDetailContent({ reference }: { reference: string }) {
           )}
         </TabContent>
 
+        <TabContent value="documents" className="mt-4">
+          <ProjectDocumentsPanel project={project} />
+        </TabContent>
+
         <TabContent value="payments" className="mt-4">
           {paymentsQuery.isLoading ? <Skeleton className="h-24" /> : null}
           <Card>
             <CardDescription>
-              {Array.isArray(paymentsQuery.data) && paymentsQuery.data.length > 0
+              {Array.isArray(paymentsQuery.data) &&
+              paymentsQuery.data.length > 0
                 ? `${paymentsQuery.data.length} installment(s) on record.`
                 : "No payments recorded yet."}
             </CardDescription>
@@ -198,10 +268,12 @@ function ProjectHeader({ project }: { project: ProjectDetail }) {
             {project.reference} · {project.name}
           </p>
           <p className="mt-1 text-sm text-text-secondary">
-            Client: {project.client?.name ?? project.client_name ?? "—"} · Sales:{" "}
-            {project.sales_user?.name ?? "—"}
+            Client: {project.client?.name ?? project.client_name ?? "—"} ·
+            Sales: {project.sales_user?.name ?? "—"}
           </p>
-          <p className="mt-1 text-sm capitalize text-text-secondary">Stage: {project.stage}</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Stage: {formatEnumLabel(project.stage)}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {!project.site_ready ? (
@@ -210,7 +282,7 @@ function ProjectHeader({ project }: { project: ProjectDetail }) {
             </Badge>
           ) : null}
           <Badge color="gray" size="md">
-            {project.status}
+            {formatEnumLabel(project.status)}
           </Badge>
         </div>
       </div>

@@ -2,7 +2,9 @@ import { axiosInstance } from "@/config/axios";
 import { isAppNotification, type AppNotification } from "@/types/notifications";
 import type { PaginatedResponse } from "@/types/api";
 
-function isPaginatedNotifications(value: unknown): value is PaginatedResponse<AppNotification> {
+function isPaginatedNotifications(
+  value: unknown,
+): value is PaginatedResponse<AppNotification> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -14,7 +16,9 @@ export async function getNotifications(params?: {
   page?: number;
   per_page?: number;
 }): Promise<PaginatedResponse<AppNotification>> {
-  const response = await axiosInstance.get<unknown>("/notifications", { params });
+  const response = await axiosInstance.get<unknown>("/notifications", {
+    params,
+  });
 
   if (!isPaginatedNotifications(response)) {
     throw new Error("Invalid notifications response");

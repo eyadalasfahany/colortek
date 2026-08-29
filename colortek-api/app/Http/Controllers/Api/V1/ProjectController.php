@@ -14,6 +14,7 @@ use App\Http\Requests\ProjectStoreRequest;
 use App\Http\Requests\ProjectUpdateRequest;
 use App\Http\Resources\ActivityEventResource;
 use App\Http\Resources\PaymentResource;
+use App\Http\Resources\ProjectDocumentResource;
 use App\Http\Resources\ProjectListResource;
 use App\Http\Resources\ProjectResource;
 use App\Http\Resources\ProjectWorkflowResource;
@@ -21,6 +22,7 @@ use App\Http\Resources\SiteVisitResource;
 use App\Http\Resources\TaskListResource;
 use App\Models\Project;
 use App\Services\Activity\ActivityQuery;
+use App\Services\Projects\ProjectDocumentService;
 use App\Services\Projects\ProjectService;
 use App\Services\Projects\ProjectWorkflowService;
 use Illuminate\Http\JsonResponse;
@@ -39,6 +41,7 @@ final class ProjectController extends Controller
         private ActivityQuery $aq,
         private ActivityFilter $af,
         private ProjectService $projectService,
+        private ProjectDocumentService $documentService,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -100,10 +103,23 @@ final class ProjectController extends Controller
 
     public function showByReference(Request $request, string $ref): JsonResponse
     {
-        $project = Project::with(['client', 'salesUser'])->where('reference', $ref)->firstOrFail();
+        $project = Project::with(['client', 'salesUser', 'quotation'])->where('reference', $ref)->firstOrFail();
         $this->authorize('view', $project);
 
         return response()->json(['data' => ProjectResource::make($project)]);
+    }
+
+    /** Every file attached anywhere under this project. */
+    public function documents(Request $request, int $id): JsonResponse
+    {
+        $project = Project::query()->findOrFail($id);
+        $this->authorize('view', $project);
+
+        return ProjectDocumentResource::collection($this->documentService->paginateForProject(
+            $project,
+            (int) $request->integer('per_page', 25),
+            $request->only(['type']),
+        ))->response();
     }
 
     public function workflow(Request $request, int $id): JsonResponse

@@ -1,8 +1,14 @@
 import { axiosInstance } from "@/config/axios";
-import { isActivityEvent, type ActivityEvent, type ActivityListParams } from "@/types/activity";
+import {
+  isActivityEvent,
+  type ActivityEvent,
+  type ActivityListParams,
+} from "@/types/activity";
 import type { PaginatedResponse } from "@/types/api";
 
-function isPaginatedActivity(value: unknown): value is PaginatedResponse<ActivityEvent> {
+function isPaginatedActivity(
+  value: unknown,
+): value is PaginatedResponse<ActivityEvent> {
   return (
     typeof value === "object" &&
     value !== null &&

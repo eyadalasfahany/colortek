@@ -30,6 +30,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'odoo' => [
+        // `fake` records pushes to odoo_sync_log without calling anything.
+        // `http` is a Phase 2 stub that throws if resolved.
+        'driver' => env('ODOO_DRIVER', 'fake'),
+        'base_url' => env('ODOO_BASE_URL'),
+        'db' => env('ODOO_DB'),
+        'username' => env('ODOO_USERNAME'),
+        'password' => env('ODOO_PASSWORD'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

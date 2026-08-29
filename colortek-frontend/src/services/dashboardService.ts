@@ -9,7 +9,9 @@ import {
 } from "@/types/dashboard";
 
 export async function getControlRoomDashboard(): Promise<ControlRoomData> {
-  const data = unwrapData<unknown>(await axiosInstance.get("/dashboard/control-room"));
+  const data = unwrapData<unknown>(
+    await axiosInstance.get("/dashboard/control-room"),
+  );
 
   if (!isControlRoomData(data)) {
     throw new Error("Invalid control room response");
@@ -25,7 +27,9 @@ export async function getWorkshopDashboard(): Promise<WorkshopDashboardData> {
 }
 
 export async function getSiteDashboard(): Promise<SiteDashboardData> {
-  return unwrapData<SiteDashboardData>(await axiosInstance.get("/dashboard/site"));
+  return unwrapData<SiteDashboardData>(
+    await axiosInstance.get("/dashboard/site"),
+  );
 }
 
 export async function getSamplesDashboard(): Promise<SamplesDashboardData> {

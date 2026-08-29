@@ -17,9 +17,16 @@ final class QuotationResource extends JsonResource
         return [
             'id' => $this->id,
             'number' => $this->number,
-            'total_value' => $this->total_value,
+            'client_id' => $this->client_id,
+            'client' => $this->whenLoaded('client', fn () => [
+                'id' => $this->client->id,
+                'name' => $this->client->name,
+            ]),
+            'total_value' => (string) $this->total_value,
             'currency' => $this->currency,
             'status' => $this->status->value,
+            'locked_at' => $this->locked_at?->toIso8601String(),
+            'odoo_quotation_id' => $this->odoo_quotation_id,
         ];
     }
 }

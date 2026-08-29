@@ -31,6 +31,36 @@ final class WorkflowTemplateAdminService
         return $record;
     }
 
+    /**
+     * Creates a brand-new template as version 1, unpublished. Distinct from
+     * createDraftFromPublished, which forks an existing one.
+     *
+     * @param  array<string, mixed>  $d
+     */
+    public function create(array $d, User $u): WorkflowTemplate
+    {
+        return DB::transaction(function () use ($d, $u): WorkflowTemplate {
+            $template = WorkflowTemplate::create([
+                'code' => $d['code'],
+                'version' => 1,
+                'name_en' => $d['name_en'],
+                'name_ar' => $d['name_ar'],
+                'scope' => $d['scope'],
+                'is_active' => false,
+                // A new template is always a draft; publishing is a separate,
+                // audited step so an unfinished workflow cannot go live.
+                'published_at' => null,
+            ]);
+
+            $this->audit->log($template, 'created', $u, newValues: [
+                'code' => $template->code,
+                'version' => $template->version,
+            ]);
+
+            return $template->load(['definitions.department', 'transitions']);
+        });
+    }
+
     public function updateDraft(WorkflowTemplate $t, array $d, User $u): WorkflowTemplate
     {
         if ($t->published_at) {

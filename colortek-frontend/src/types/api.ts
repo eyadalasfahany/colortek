@@ -68,8 +68,12 @@ export interface PaymentSubjectContext {
   attachments?: PreviousOutputAttachment[];
 }
 
-export function isPaymentSubjectContext(value: unknown): value is PaymentSubjectContext {
-  return isRecord(value) && value.type === "payment" && typeof value.id === "number";
+export function isPaymentSubjectContext(
+  value: unknown,
+): value is PaymentSubjectContext {
+  return (
+    isRecord(value) && value.type === "payment" && typeof value.id === "number"
+  );
 }
 
 export interface FormSchema {
@@ -91,7 +95,9 @@ export interface PreviousOutput {
   attachments?: PreviousOutputAttachment[];
 }
 
-export type TaskSubjectContext = PaymentSubjectContext | import("@/types/samples").SampleSubjectContext;
+export type TaskSubjectContext =
+  | PaymentSubjectContext
+  | import("@/types/samples").SampleSubjectContext;
 
 export interface TaskDetail extends TaskListItem {
   task_code?: string | null;
@@ -109,6 +115,15 @@ export interface TaskDetail extends TaskListItem {
     name: string;
     client_name?: string | null;
   } | null;
+  /** Only present when the request asks for the `comments` relation. */
+  comments?: TaskComment[];
+}
+
+export interface TaskComment {
+  id: number;
+  body: string;
+  user?: { id: number; name: string } | null;
+  created_at: string | null;
 }
 
 export interface CreatedTask {
@@ -197,7 +212,9 @@ export function isCreatedTask(value: unknown): value is CreatedTask {
   );
 }
 
-export function isPaginatedTasks(value: unknown): value is PaginatedResponse<TaskListItem> {
+export function isPaginatedTasks(
+  value: unknown,
+): value is PaginatedResponse<TaskListItem> {
   return (
     isRecord(value) &&
     Array.isArray(value.data) &&
@@ -207,7 +224,9 @@ export function isPaginatedTasks(value: unknown): value is PaginatedResponse<Tas
   );
 }
 
-export function isCompleteTaskResponse(value: unknown): value is CompleteTaskResponse {
+export function isCompleteTaskResponse(
+  value: unknown,
+): value is CompleteTaskResponse {
   if (!isRecord(value) || !isTaskDetail(value.data) || !isRecord(value.meta)) {
     return false;
   }

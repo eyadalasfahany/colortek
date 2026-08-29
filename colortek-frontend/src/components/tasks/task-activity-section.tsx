@@ -1,6 +1,6 @@
 "use client";
 
-import type { TaskDetail } from "@/types/api";
+import type { TaskComment, TaskDetail } from "@/types/api";
 import { format } from "date-fns";
 
 interface TimelineEntry {
@@ -43,7 +43,11 @@ export function buildTaskTimeline(task: TaskDetail): TimelineEntry[] {
   entries.push({
     id: "status",
     label: `Status: ${task.status.replaceAll("_", " ")}`,
-    at: task.completed_at ?? task.started_at ?? task.claimed_at ?? new Date().toISOString(),
+    at:
+      task.completed_at ??
+      task.started_at ??
+      task.claimed_at ??
+      new Date().toISOString(),
   });
 
   return entries.sort(
@@ -56,14 +60,16 @@ export function TaskActivitySection({
   comments,
 }: {
   task: TaskDetail;
-  comments: Array<{ id: string; body: string; created_at: string; author?: string }>;
+  comments: TaskComment[];
 }) {
   const timeline = buildTaskTimeline(task);
 
   return (
     <div className="mb-4 space-y-4">
       <section>
-        <h3 className="mb-3 text-lg font-semibold text-text-primary">Activity</h3>
+        <h3 className="mb-3 text-lg font-semibold text-text-primary">
+          Activity
+        </h3>
         <ul className="space-y-2 border-s-2 border-card-border ps-4">
           {timeline.map((entry) => (
             <li key={entry.id} className="text-sm">
@@ -79,14 +85,21 @@ export function TaskActivitySection({
 
       {comments.length > 0 ? (
         <section>
-          <h4 className="mb-2 text-sm font-semibold text-text-primary">Comments</h4>
+          <h4 className="mb-2 text-sm font-semibold text-text-primary">
+            Comments
+          </h4>
           <ul className="space-y-2">
             {comments.map((comment) => (
-              <li key={comment.id} className="rounded-lg border border-card-border p-3 text-sm">
+              <li
+                key={comment.id}
+                className="rounded-lg border border-card-border p-3 text-sm"
+              >
                 <p className="text-text-primary">{comment.body}</p>
                 <p className="mt-1 text-xs text-text-tertiary">
-                  {comment.author ?? "Someone"} ·{" "}
-                  {format(new Date(comment.created_at), "d MMM h:mm a")}
+                  {comment.user?.name ?? "Someone"}
+                  {comment.created_at
+                    ? ` · ${format(new Date(comment.created_at), "d MMM h:mm a")}`
+                    : ""}
                 </p>
               </li>
             ))}

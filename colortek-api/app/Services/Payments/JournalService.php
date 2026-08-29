@@ -9,6 +9,8 @@ use App\Enums\PaymentStatus;
 use App\Events\JournalReopened;
 use App\Events\JournalSubmitted;
 use App\Exceptions\TaskNotReadyToComplete;
+use App\Gateways\Odoo\Data\JournalData;
+use App\Gateways\Odoo\OdooGateway;
 use App\Models\Journal;
 use App\Models\Payment;
 use App\Models\User;
@@ -19,7 +21,10 @@ use Illuminate\Support\Facades\DB;
 
 final class JournalService
 {
-    public function __construct(private AuditLogger $auditLogger) {}
+    public function __construct(
+        private AuditLogger $auditLogger,
+        private OdooGateway $odoo,
+    ) {}
 
     public function openJournalForDate(CarbonImmutable $date): Journal
     {
@@ -97,7 +102,15 @@ final class JournalService
             $journal->recalculateTotal();
         });
 
-        DB::afterCommit(fn () => event(new JournalSubmitted($journal->fresh(), $user)));
+        DB::afterCommit(function () use ($journal, $user): void {
+            $fresh = $journal->fresh();
+            event(new JournalSubmitted($fresh, $user));
+
+            // specs/13 §1 rule 3: an Odoo failure must never block the workflow,
+            // so the push happens after the transaction and its result is
+            // recorded rather than thrown.
+            $this->odoo->pushJournal(JournalData::fromModel($fresh));
+        });
     }
 
     public function submitEmptyJournal(Journal $journal): void
@@ -170,5 +183,7 @@ final class JournalService
                 'odoo_journal_ref' => $fields['odoo_reference'] ?? $journal->odoo_journal_ref,
             ]);
         });
+
+        DB::afterCommit(fn () => $this->odoo->pushJournal(JournalData::fromModel($journal->fresh())));
     }
 }

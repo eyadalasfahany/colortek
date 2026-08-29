@@ -1,5 +1,8 @@
 import { axiosInstance } from "@/config/axios";
-import type { PeopleHoursFilters, PeopleHoursReport } from "@/types/peopleHours";
+import type {
+  PeopleHoursFilters,
+  PeopleHoursReport,
+} from "@/types/peopleHours";
 import { unwrapData } from "@/types/api";
 
 export async function getPeopleHours(

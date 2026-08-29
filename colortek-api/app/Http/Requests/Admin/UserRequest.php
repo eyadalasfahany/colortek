@@ -19,6 +19,6 @@ final class UserRequest extends FormRequest
     {
         $id = $this->route('id');
 
-        return ['name' => ['sometimes', 'string', 'max:150'], 'email' => ['sometimes', 'email', 'max:190', Rule::unique('users', 'email')->ignore($id)], 'password' => [$id ? 'sometimes' : 'required', 'string', 'min:8'], 'phone' => ['nullable', 'string', 'max:30'], 'locale' => ['sometimes', Rule::in(['en', 'ar'])], 'primary_department_id' => ['nullable', 'integer', 'exists:departments,id'], 'active' => ['sometimes', 'boolean'], 'release_claimed_tasks' => ['sometimes', 'boolean'], 'departments' => ['sometimes', 'array'], 'departments.*.id' => ['required', 'integer', 'exists:departments,id'], 'departments.*.is_supervisor' => ['sometimes', 'boolean']];
+        return ['name' => ['sometimes', 'string', 'max:150'], 'email' => ['sometimes', 'email', 'max:190', Rule::unique('users', 'email')->ignore($id)], 'password' => [$id ? 'sometimes' : 'required', 'string', 'min:8'], 'phone' => ['nullable', 'string', 'max:30'], 'locale' => ['sometimes', Rule::in(['en', 'ar'])], 'primary_department_id' => ['nullable', 'integer', 'exists:departments,id'], 'active' => ['sometimes', 'boolean'], 'release_claimed_tasks' => ['sometimes', 'boolean'], 'departments' => ['sometimes', 'array'], 'departments.*.id' => ['required', 'integer', 'exists:departments,id'], 'departments.*.is_supervisor' => ['sometimes', 'boolean'], 'roles' => ['sometimes', 'array'], 'roles.*' => ['string', Rule::exists('roles', 'name')]];
     }
 }

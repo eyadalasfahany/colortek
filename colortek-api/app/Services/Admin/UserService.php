@@ -31,6 +31,12 @@ final class UserService
                 $this->syncDepartments($u, $d['departments']);
             }
 
+            // Roles may also be set through POST /users/{id}/roles, but creating
+            // a user and granting access in one call is what the screen needs.
+            if (isset($d['roles'])) {
+                $u->syncRoles($d['roles']);
+            }
+
             return $u->fresh(['departments', 'primaryDepartment', 'roles']);
         });
     }
@@ -55,6 +61,9 @@ final class UserService
                 $this->syncDepartments($u, $d['departments']);
             } if ($claimed > 0 && ! empty($d['release_claimed_tasks'])) {
                 Task::where('claimed_by_user_id', $u->id)->update(['status' => TaskStatus::Ready, 'claimed_by_user_id' => null, 'claimed_at' => null, 'started_at' => null]);
+            }
+            if (isset($d['roles'])) {
+                $this->syncRoles($u, $d['roles'], $u);
             }
 
             return $u->fresh(['departments', 'primaryDepartment', 'roles']);

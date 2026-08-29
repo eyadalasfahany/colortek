@@ -82,7 +82,23 @@ function ControlRoomContent() {
                           </CardDescription>
                           <p className="mt-2 text-sm text-text-primary">
                             <span className="font-medium">Next:</span>{" "}
-                            {project.next_action ?? "—"}
+                            {project.next_action ? (
+                              <>
+                                {project.next_action.title}
+                                <span className="text-text-secondary">
+                                  {" "}
+                                  · {project.next_action.department} ·{" "}
+                                  {project.next_action.holder}
+                                </span>
+                                {project.next_action.is_overdue ? (
+                                  <Badge color="error" size="sm" className="ms-2">
+                                    Overdue
+                                  </Badge>
+                                ) : null}
+                              </>
+                            ) : (
+                              "—"
+                            )}
                           </p>
                         </div>
                         {!project.site_ready ? (

@@ -44,6 +44,15 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Sanctum registers this guard itself, but with `provider => null`.
+        // Anything that resolves the user model from the active guard — such as
+        // Spatie's Role::users() relation — then blows up on an API request.
+        // Declaring it here gives that lookup a model to find.
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
     ],
 
     /*

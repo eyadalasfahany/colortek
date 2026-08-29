@@ -44,6 +44,20 @@ export async function getEmployeeOptions(): Promise<OptionItem[]> {
   return asOptions(await axiosInstance.get<unknown>("/options/employees"));
 }
 
-export async function getUserOptions(): Promise<OptionItem[]> {
-  return asOptions(await axiosInstance.get<unknown>("/options/users"));
+export async function getUserOptions(departmentId?: number): Promise<OptionItem[]> {
+  return asOptions(
+    await axiosInstance.get<unknown>("/options/users", {
+      params: departmentId ? { department_id: departmentId } : undefined,
+    }),
+  );
+}
+
+export async function getClientOptions(): Promise<OptionItem[]> {
+  return asOptions(await axiosInstance.get<unknown>("/options/clients"));
+}
+
+export async function getBlockerCategoryOptions(): Promise<OptionItem[]> {
+  return asOptions(
+    await axiosInstance.get<unknown>("/options/blocker-categories"),
+  );
 }

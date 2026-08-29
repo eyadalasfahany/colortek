@@ -55,7 +55,7 @@ export default function AuditLogView() {
 
   const usersQuery = useQuery({
     queryKey: queryKeys.options.users(),
-    queryFn: getUserOptions,
+    queryFn: () => getUserOptions(),
   });
 
   const auditQuery = useQuery({

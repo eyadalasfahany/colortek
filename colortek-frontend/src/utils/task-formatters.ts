@@ -1,5 +1,12 @@
-import { differenceInCalendarDays, differenceInHours, format, isToday, isTomorrow } from "date-fns";
+import {
+  differenceInCalendarDays,
+  differenceInHours,
+  format,
+  isToday,
+  isTomorrow,
+} from "date-fns";
 import type { TaskPriority, TaskStatus } from "@/types/api";
+import { formatEnumLabel } from "@/utils/enum-label";
 
 type BadgeColor =
   | "gray"
@@ -16,7 +23,10 @@ type BadgeColor =
   | "rose"
   | "orange";
 
-export function formatDeadlineInWords(dueAt: string | null, isOverdue = false): string {
+export function formatDeadlineInWords(
+  dueAt: string | null,
+  isOverdue = false,
+): string {
   if (!dueAt) {
     return "No deadline";
   }
@@ -115,9 +125,9 @@ export function priorityLabel(priority: TaskPriority): string | null {
 }
 
 export function formatStatusLabel(status: TaskStatus): string {
-  return status.replaceAll("_", " ");
+  return formatEnumLabel(status);
 }
 
 export function formatAttachmentType(type: string): string {
-  return type.replaceAll("_", " ");
+  return formatEnumLabel(type);
 }

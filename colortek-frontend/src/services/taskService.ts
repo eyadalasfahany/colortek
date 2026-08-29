@@ -20,7 +20,9 @@ export interface TaskListParams {
   per_page?: number;
 }
 
-export async function getTasks(params: TaskListParams): Promise<PaginatedResponse<TaskListItem>> {
+export async function getTasks(
+  params: TaskListParams,
+): Promise<PaginatedResponse<TaskListItem>> {
   const response = await axiosInstance.get<unknown>("/tasks", {
     params: {
       scope: params.scope,
@@ -38,8 +40,26 @@ export async function getTasks(params: TaskListParams): Promise<PaginatedRespons
   return response;
 }
 
+/**
+ * The task detail endpoint only returns a relation when it is named in
+ * `?relations=`. Without this, comments (and the rest) never come back and the
+ * screen looks like the write failed.
+ */
+const TASK_DETAIL_RELATIONS = [
+  "department",
+  "claimant",
+  "project",
+  "definition",
+  "subject",
+  "comments",
+  "comments.user",
+  "blockerCategory",
+].join(",");
+
 export async function getTask(id: number): Promise<TaskDetail> {
-  const response = await axiosInstance.get<unknown>(`/tasks/${id}`);
+  const response = await axiosInstance.get<unknown>(`/tasks/${id}`, {
+    params: { relations: TASK_DETAIL_RELATIONS },
+  });
   const data = unwrapData<unknown>(response);
 
   if (!isTaskDetail(data)) {
@@ -80,7 +100,10 @@ export async function completeTask(
   id: number,
   payload: CompleteTaskPayload,
 ): Promise<CompleteTaskResponse> {
-  const response = await axiosInstance.post<unknown>(`/tasks/${id}/complete`, payload);
+  const response = await axiosInstance.post<unknown>(
+    `/tasks/${id}/complete`,
+    payload,
+  );
 
   if (!isCompleteTaskResponse(response)) {
     throw new Error("Invalid complete response");
@@ -89,8 +112,14 @@ export async function completeTask(
   return response;
 }
 
-export async function overrideSiteBlock(id: number, reason: string): Promise<TaskDetail> {
-  const response = await axiosInstance.post<unknown>(`/tasks/${id}/override-site-block`, { reason });
+export async function overrideSiteBlock(
+  id: number,
+  reason: string,
+): Promise<TaskDetail> {
+  const response = await axiosInstance.post<unknown>(
+    `/tasks/${id}/override-site-block`,
+    { reason },
+  );
   const data = unwrapData<unknown>(response);
 
   if (!isTaskDetail(data)) {
@@ -133,8 +162,13 @@ export async function resumeTask(id: number): Promise<TaskDetail> {
   return data;
 }
 
-export async function unblockTask(id: number): Promise<TaskDetail> {
-  const response = await axiosInstance.post<unknown>(`/tasks/${id}/unblock`);
+export async function unblockTask(
+  id: number,
+  resolutionNote: string,
+): Promise<TaskDetail> {
+  const response = await axiosInstance.post<unknown>(`/tasks/${id}/unblock`, {
+    resolution_note: resolutionNote,
+  });
   const data = unwrapData<unknown>(response);
 
   if (!isTaskDetail(data)) {
@@ -150,8 +184,14 @@ export interface BlockTaskPayload {
   expected_resolution?: string;
 }
 
-export async function blockTask(id: number, payload: BlockTaskPayload): Promise<TaskDetail> {
-  const response = await axiosInstance.post<unknown>(`/tasks/${id}/block`, payload);
+export async function blockTask(
+  id: number,
+  payload: BlockTaskPayload,
+): Promise<TaskDetail> {
+  const response = await axiosInstance.post<unknown>(
+    `/tasks/${id}/block`,
+    payload,
+  );
   const data = unwrapData<unknown>(response);
 
   if (!isTaskDetail(data)) {
@@ -163,4 +203,12 @@ export async function blockTask(id: number, payload: BlockTaskPayload): Promise<
 
 export async function addTaskComment(id: number, body: string): Promise<void> {
   await axiosInstance.post(`/tasks/${id}/comments`, { body });
+}
+
+/**
+ * Hands a task to a different person. The queue is department-scoped, so the
+ * picker narrows `/options/users` by the task's department.
+ */
+export async function reassignTask(id: number, assigneeUserId: number): Promise<void> {
+  await axiosInstance.post(`/tasks/${id}/reassign`, { assignee_user_id: assigneeUserId });
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\QuotationStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\QuotationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property QuotationStatus $status
+ * @property CarbonImmutable|null $locked_at
  */
 final class Quotation extends Model
 {

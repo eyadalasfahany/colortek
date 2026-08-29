@@ -1,7 +1,7 @@
 "use client";
 
 import { MAIN_NAV_ITEMS, MOBILE_PRIMARY_NAV } from "@/components/common/sidebar/data";
-import { useCanSeeNavItem, useFilteredNavItems } from "@/hooks/use-nav-items";
+import { useFilteredNavItems, useNavItemVisibility } from "@/hooks/use-nav-items";
 import { cn } from "@/utils/cn";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -12,7 +12,7 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const allItems = useFilteredNavItems();
-  const canSee = useCanSeeNavItem;
+  const canSee = useNavItemVisibility();
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
 

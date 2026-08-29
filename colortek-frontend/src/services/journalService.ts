@@ -3,7 +3,9 @@ import { isJournal, type Journal } from "@/types/journal";
 import type { PaginatedResponse } from "@/types/api";
 import { unwrapData } from "@/types/api";
 
-function isPaginatedJournals(value: unknown): value is PaginatedResponse<Journal> {
+function isPaginatedJournals(
+  value: unknown,
+): value is PaginatedResponse<Journal> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -25,7 +27,9 @@ export async function getJournals(params?: {
 }
 
 export async function getJournalByDate(date: string): Promise<Journal> {
-  const data = unwrapData<unknown>(await axiosInstance.get(`/journals/${date}`));
+  const data = unwrapData<unknown>(
+    await axiosInstance.get(`/journals/${date}`),
+  );
 
   if (!isJournal(data)) {
     throw new Error("Invalid journal response");

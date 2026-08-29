@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminCalendarController;
 use App\Http\Controllers\Api\V1\Admin\AdminEmployeeController;
 use App\Http\Controllers\Api\V1\Admin\AdminFailedJobController;
 use App\Http\Controllers\Api\V1\Admin\AdminHolidayController;
+use App\Http\Controllers\Api\V1\Admin\AdminOdooSyncLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminPermissionController;
 use App\Http\Controllers\Api\V1\Admin\AdminRoleController;
 use App\Http\Controllers\Api\V1\Admin\AdminSettingController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminWorkflowTemplateController;
 use App\Http\Controllers\Api\V1\AttachmentController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CorrectiveActionController;
 use App\Http\Controllers\Api\V1\CrewLogController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -31,6 +33,7 @@ use App\Http\Controllers\Api\V1\OptionsController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\PeopleHoursController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\SampleController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SiteChecklistItemController;
@@ -74,6 +77,16 @@ Route::prefix('v1')->group(function (): void {
         Route::post('crew-logs/{id}/submit', [CrewLogController::class, 'submit'])->whereNumber('id');
         Route::get('employees', [EmployeeController::class, 'index']);
         Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+        Route::get('clients', [ClientController::class, 'index']);
+        Route::post('clients', [ClientController::class, 'store']);
+        Route::get('clients/{id}', [ClientController::class, 'show'])->whereNumber('id');
+        Route::patch('clients/{id}', [ClientController::class, 'update'])->whereNumber('id');
+
+        Route::get('quotations', [QuotationController::class, 'index']);
+        Route::post('quotations', [QuotationController::class, 'store']);
+        Route::get('quotations/{id}', [QuotationController::class, 'show'])->whereNumber('id');
+        Route::patch('quotations/{id}', [QuotationController::class, 'update'])->whereNumber('id');
         Route::post('tasks/{id}/attachments', [TaskController::class, 'attach'])->whereNumber('id');
         Route::post('tasks/{id}/override-site-block', [TaskController::class, 'overrideSiteBlock'])->whereNumber('id');
         Route::post('attachments', [AttachmentController::class, 'store']);
@@ -115,6 +128,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('options/projects', [OptionsController::class, 'projects']);
         Route::get('options/blocker-categories', [OptionsController::class, 'blockerCategories']);
         Route::get('corrective-actions', [CorrectiveActionController::class, 'index']);
+        Route::post('corrective-actions', [CorrectiveActionController::class, 'store']);
         Route::get('corrective-actions/{id}', [CorrectiveActionController::class, 'show'])->whereNumber('id');
         Route::patch('corrective-actions/{id}', [CorrectiveActionController::class, 'update'])->whereNumber('id');
         Route::get('activity', [ActivityController::class, 'index']);
@@ -130,6 +144,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('projects/{id}/complete', [ProjectController::class, 'complete'])->whereNumber('id');
         Route::post('projects/{id}/cancel', [ProjectController::class, 'cancel'])->whereNumber('id');
         Route::get('projects/{id}/workflow', [ProjectController::class, 'workflow'])->whereNumber('id');
+        Route::get('projects/{id}/documents', [ProjectController::class, 'documents'])->whereNumber('id');
         Route::get('projects/{id}/tasks', [ProjectController::class, 'tasks'])->whereNumber('id');
         Route::get('projects/{id}/payments', [ProjectController::class, 'payments'])->whereNumber('id');
         Route::get('projects/{id}/hours', [ProjectController::class, 'hours'])->whereNumber('id');
@@ -163,6 +178,7 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('holidays/{id}', [AdminHolidayController::class, 'destroy'])->whereNumber('id');
             Route::post('calendar/impact', [AdminCalendarController::class, 'impact']);
             Route::get('workflow-templates', [AdminWorkflowTemplateController::class, 'index']);
+            Route::post('workflow-templates', [AdminWorkflowTemplateController::class, 'store']);
             Route::get('workflow-templates/{id}', [AdminWorkflowTemplateController::class, 'show'])->whereNumber('id');
             Route::patch('workflow-templates/{id}', [AdminWorkflowTemplateController::class, 'update'])->whereNumber('id');
             Route::post('workflow-templates/{id}/draft', [AdminWorkflowTemplateController::class, 'createDraft'])->whereNumber('id');
@@ -175,6 +191,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('failed-jobs', [AdminFailedJobController::class, 'index']);
             Route::post('failed-jobs/{uuid}/retry', [AdminFailedJobController::class, 'retry']);
             Route::get('access/coverage', [AdminAccessController::class, 'coverage']);
+            Route::get('odoo-sync-log', [AdminOdooSyncLogController::class, 'index']);
         });
         Route::get('enums/{name}', [EnumController::class, 'show']);
     });

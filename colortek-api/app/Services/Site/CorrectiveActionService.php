@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Models\SiteVisit;
 use App\Models\Task;
 use App\Models\WorkflowTaskDefinition;
+use Illuminate\Support\Facades\DB;
 
 final class CorrectiveActionService
 {
@@ -56,6 +57,68 @@ final class CorrectiveActionService
 
             $action->update(['task_id' => $task->id]);
         }
+    }
+
+    /**
+     * Raises a corrective action by hand, for something the checklist did not
+     * cover. `responsible_party` decides the queue —
+     * `07-workflows/05-site-visit-and-readiness.md` §: client, contractor and
+     * other_trade all go to Sales, because Sales is who talks to the client;
+     * only `colortek` routes to an internal department.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public function createForVisit(SiteVisit $visit, array $data): CorrectiveAction
+    {
+        $party = $data['responsible_party'] instanceof ResponsibleParty
+            ? $data['responsible_party']
+            : ResponsibleParty::from((string) $data['responsible_party']);
+
+        return DB::transaction(function () use ($visit, $data, $party): CorrectiveAction {
+            $action = CorrectiveAction::create([
+                'site_visit_id' => $visit->id,
+                'checklist_item_id' => $data['checklist_item_id'] ?? null,
+                'description' => $data['description'],
+                'responsible_party' => $party,
+                'status' => CorrectiveActionStatus::Open,
+            ]);
+
+            $definition = WorkflowTaskDefinition::query()
+                ->where('code', 'corrective_action_task')
+                ->whereHas('template', fn ($q) => $q->where('code', 'site_visit'))
+                ->firstOrFail();
+
+            $department = $this->departmentFor($party, $data['department_id'] ?? null);
+
+            $task = Task::create([
+                'reference' => sprintf('%s-CA%d', $visit->reference, $action->id),
+                'task_definition_id' => $definition->id,
+                'project_id' => $visit->project_id,
+                'subject_type' => $action->getMorphClass(),
+                'subject_id' => $action->id,
+                'title' => $definition->title_en,
+                'instructions' => $data['description'],
+                'department_id' => $department->id,
+                'status' => TaskStatus::Ready,
+                'priority' => $definition->priority,
+                'ready_at' => now(),
+            ]);
+
+            $action->update(['task_id' => $task->id]);
+
+            return $action->fresh(['checklistItem', 'siteVisit', 'task']);
+        });
+    }
+
+    private function departmentFor(ResponsibleParty $party, ?int $departmentId): Department
+    {
+        if ($party === ResponsibleParty::Colortek && $departmentId !== null) {
+            return Department::query()->findOrFail($departmentId);
+        }
+
+        // Everything the client or another trade owns is chased by Sales, which
+        // is what keeps the delay attributed to the right party in reports.
+        return Department::query()->where('code', 'sales')->firstOrFail();
     }
 
     public function resolveFromTask(Task $task, string $resolutionNote): CorrectiveAction

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Api\V1\Admin\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreWorkflowTemplateRequest;
 use App\Http\Requests\Admin\UpdateWorkflowTemplateRequest;
 use App\Http\Resources\Admin\WorkflowTemplateResource;
 use App\Models\WorkflowTemplate;
@@ -34,6 +35,16 @@ final class AdminWorkflowTemplateController extends Controller
         $this->authorize('view', $t);
 
         return response()->json(['data' => WorkflowTemplateResource::make($t)]);
+    }
+
+    public function store(StoreWorkflowTemplateRequest $r): JsonResponse
+    {
+        $this->authorizeAdmin('workflow.manage');
+        $this->authorize('create', WorkflowTemplate::class);
+
+        return response()->json([
+            'data' => WorkflowTemplateResource::make($this->service->create($r->validated(), $r->user())),
+        ], 201);
     }
 
     public function update(UpdateWorkflowTemplateRequest $r, int $id): JsonResponse

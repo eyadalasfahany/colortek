@@ -33,27 +33,29 @@ export function useFilteredNavItems(items: NavItemConfig[] = MAIN_NAV_ITEMS) {
   }, [can, items, user?.departments]);
 }
 
-export function useCanSeeNavItem(item: {
-  permission?: string;
-  departmentCodes?: string[];
-}): boolean {
+export function useNavItemVisibility() {
   const { can } = usePermissions();
   const { user } = useAuth();
 
-  if (item.permission && !can(item.permission)) {
-    return false;
-  }
-
-  if (item.departmentCodes?.length) {
+  return useMemo(() => {
     const departmentCodes =
       user?.departments?.map((d) => d.code.toLowerCase()) ?? [];
-    const inDept = item.departmentCodes.some((code) =>
-      departmentCodes.includes(code.toLowerCase()),
-    );
-    if (!inDept && !can("project.view_all")) {
-      return false;
-    }
-  }
 
-  return true;
+    return (item: { permission?: string; departmentCodes?: string[] }) => {
+      if (item.permission && !can(item.permission)) {
+        return false;
+      }
+
+      if (item.departmentCodes?.length) {
+        const inDept = item.departmentCodes.some((code) =>
+          departmentCodes.includes(code.toLowerCase()),
+        );
+        if (!inDept && !can("project.view_all")) {
+          return false;
+        }
+      }
+
+      return true;
+    };
+  }, [can, user?.departments]);
 }
